@@ -29,11 +29,53 @@ class SchemeHandler: NSObject {
     }
 }
 
-private enum WikiYeshivaArticleAdapter {
-    static let host = "www.yeshiva.org.il"
+// MARK: - WikiSites/Core
 
-    static func canHandleMobileHTMLRequest(_ url: URL?) -> Bool {
-        guard let url = url, url.host == host else {
+private struct WikiSiteProfile {
+    let identifier: String
+    let displayName: String
+    let host: String
+    let languageCode: String
+    let isRTL: Bool
+    let articleBaseURL: URL
+}
+
+private protocol WikiArticleContentAdapter {
+    var siteProfile: WikiSiteProfile { get }
+    func canHandleMobileHTMLRequest(_ url: URL?) -> Bool
+    func upstreamRequest(forMobileHTMLRequest url: URL) -> URLRequest?
+    func title(fromMobileHTMLRequest url: URL) -> String?
+    func adaptedMobileHTMLDocument(from upstreamHTML: String, title: String) -> String
+}
+
+private enum WikiSiteRegistry {
+    static let wikiYeshiva = WikiSiteProfile(
+        identifier: "wikiyeshiva",
+        displayName: "WikiYeshiva",
+        host: "www.yeshiva.org.il",
+        languageCode: "he",
+        isRTL: true,
+        articleBaseURL: URL(string: "https://www.yeshiva.org.il/wiki/")!
+    )
+
+    static let articleAdapters: [WikiArticleContentAdapter] = [
+        WikiYeshivaArticleAdapter(siteProfile: wikiYeshiva)
+    ]
+
+    static func articleAdapter(forMobileHTMLRequest url: URL?) -> WikiArticleContentAdapter? {
+        return articleAdapters.first { adapter in
+            adapter.canHandleMobileHTMLRequest(url)
+        }
+    }
+}
+
+// MARK: - WikiSites/WikiYeshiva
+
+private struct WikiYeshivaArticleAdapter: WikiArticleContentAdapter {
+    let siteProfile: WikiSiteProfile
+
+    func canHandleMobileHTMLRequest(_ url: URL?) -> Bool {
+        guard let url = url, url.host == siteProfile.host else {
             return false
         }
 
@@ -41,14 +83,14 @@ private enum WikiYeshivaArticleAdapter {
         return components.contains("mobile-html") && components.contains("page")
     }
 
-    static func renderRequest(from url: URL) -> URLRequest? {
-        guard let title = title(from: url) else {
+    func upstreamRequest(forMobileHTMLRequest url: URL) -> URLRequest? {
+        guard let title = title(fromMobileHTMLRequest: url) else {
             return nil
         }
 
         var components = URLComponents()
         components.scheme = "https"
-        components.host = host
+        components.host = siteProfile.host
         components.path = "/wiki/index.php"
         components.queryItems = [
             URLQueryItem(name: "title", value: title),
@@ -64,7 +106,7 @@ private enum WikiYeshivaArticleAdapter {
         return request
     }
 
-    static func title(from url: URL) -> String? {
+    func title(fromMobileHTMLRequest url: URL) -> String? {
         let components = url.pathComponents
         guard let mobileHTMLIndex = components.firstIndex(of: "mobile-html") else {
             return nil
@@ -78,26 +120,34 @@ private enum WikiYeshivaArticleAdapter {
         return encodedTitle.removingPercentEncoding?.replacingOccurrences(of: "_", with: " ")
     }
 
-    static func mobileHTMLDocument(renderedHTML: String, title: String) -> String {
+    func adaptedMobileHTMLDocument(from upstreamHTML: String, title: String) -> String {
         let escapedTitle = htmlEscaped(title)
+        let normalizedHTML = normalize(upstreamHTML)
+        let direction = siteProfile.isRTL ? "rtl" : "ltr"
+        let languageCode = siteProfile.languageCode
+        let baseURLString = siteProfile.articleBaseURL.absoluteString
 
         return """
         <!doctype html>
-        <html lang="he" dir="rtl">
+        <html lang="\(languageCode)" dir="\(direction)">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+          <base href="\(baseURLString)">
           <title>\(escapedTitle)</title>
           <style>
             :root { color-scheme: light dark; }
-            body {
+            html, body {
               margin: 0;
+              padding: 0;
+              background: Canvas;
+              color: CanvasText;
+              direction: \(direction);
+            }
+            body {
               padding: 0 16px 32px 16px;
               font: -apple-system-body;
               line-height: 1.65;
-              background: Canvas;
-              color: CanvasText;
-              direction: rtl;
             }
             main { max-width: 920px; margin: 0 auto; }
             h1 { font: -apple-system-title1; font-weight: 700; line-height: 1.25; margin: 20px 0 16px; }
@@ -107,12 +157,14 @@ private enum WikiYeshivaArticleAdapter {
             img, video { max-width: 100%; height: auto; }
             table { max-width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
             th, td { border: 1px solid rgba(128,128,128,.35); padding: 6px; }
-            .reference, .mw-editsection, .noprint, .printfooter { display: none !important; }
+            #toc, .toc, .reference, .mw-editsection, .noprint, .printfooter, #fb-root, .fb-root { display: none !important; }
             [data-theme="DARK"], [data-theme="BLACK"] { background: #101418; color: #eaecf0; }
             [data-theme="SEPIA"] { background: #f8f1e3; color: #202122; }
           </style>
           <script>
             (function() {
+              window.__wikiSiteTOCItems = [];
+
               function post(action, data) {
                 try {
                   if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.pcs) {
@@ -120,6 +172,103 @@ private enum WikiYeshivaArticleAdapter {
                   }
                 } catch (e) {}
               }
+
+              function decodeAnchor(anchor) {
+                try { return decodeURIComponent(anchor || ''); } catch (e) { return anchor || ''; }
+              }
+
+              function safeSelectorForId(id) {
+                if (window.CSS && CSS.escape) { return '#' + CSS.escape(id); }
+                return '#' + String(id).replace(/([ #;?%&,.+*~\\':"!^$[\]()=>|/@])/g, '\\$1');
+              }
+
+              function elementForAnchor(anchor) {
+                if (!anchor) { return null; }
+                return document.getElementById(anchor) || document.querySelector('[name="' + anchor.replace(/"/g, '\\"') + '"]') || document.querySelector(safeSelectorForId(anchor));
+              }
+
+              function textForElement(element) {
+                return (element && element.textContent ? element.textContent : '').replace(/\s+/g, ' ').trim();
+              }
+
+              function cleanupMediaWikiHTML() {
+                Array.prototype.forEach.call(document.querySelectorAll('script, iframe, noscript, #fb-root, .mw-editsection, .noprint, .printfooter'), function(element) {
+                  if (element && element.parentNode) { element.parentNode.removeChild(element); }
+                });
+              }
+
+              function buildTableOfContentsFromNativeTOC() {
+                var links = document.querySelectorAll('#toc li[class*="toclevel"] > a[href*="#"]');
+                return Array.prototype.map.call(links, function(link, index) {
+                  var listItem = link.closest ? link.closest('li') : null;
+                  var className = listItem ? listItem.className : '';
+                  var levelMatch = String(className).match(/toclevel-(\d+)/);
+                  var level = levelMatch ? parseInt(levelMatch[1], 10) : 1;
+                  var href = link.getAttribute('href') || '';
+                  var anchor = decodeAnchor(href.split('#').pop());
+                  var titleElement = link.querySelector('.toctext');
+                  return {
+                    id: index + 1,
+                    level: level,
+                    anchor: anchor,
+                    title: textForElement(titleElement || link)
+                  };
+                }).filter(function(item) { return item.anchor && item.title; });
+              }
+
+              function buildTableOfContentsFromHeadings() {
+                var headings = document.querySelectorAll('h2, h3, h4');
+                return Array.prototype.map.call(headings, function(heading, index) {
+                  var text = textForElement(heading);
+                  if (!text) { return null; }
+                  if (!heading.id) {
+                    heading.id = 'section-' + (index + 1);
+                  }
+                  var level = parseInt(heading.tagName.replace('H', ''), 10) - 1;
+                  return {
+                    id: index + 1,
+                    level: Math.max(level, 1),
+                    anchor: heading.id,
+                    title: text
+                  };
+                }).filter(function(item) { return item && item.anchor && item.title; });
+              }
+
+              function buildTableOfContents() {
+                var nativeItems = buildTableOfContentsFromNativeTOC();
+                if (nativeItems.length > 0) { return nativeItems; }
+                return buildTableOfContentsFromHeadings();
+              }
+
+              function firstVisibleSection(topOffset) {
+                var items = window.__wikiSiteTOCItems || [];
+                if (items.length === 0) { return { id: -1, anchor: '' }; }
+                var best = items[0];
+                var threshold = (topOffset || 0) + 8;
+                items.forEach(function(item) {
+                  var element = elementForAnchor(item.anchor);
+                  if (!element) { return; }
+                  var rect = element.getBoundingClientRect();
+                  if (rect.top <= threshold) { best = item; }
+                });
+                return { id: best.id, anchor: best.anchor };
+              }
+
+              function postScrollToAnchor(anchor) {
+                var element = elementForAnchor(anchor);
+                if (!element) { return; }
+                var rect = element.getBoundingClientRect();
+                post('scroll_to_anchor', {
+                  anchor: anchor,
+                  rect: { x: rect.left, y: rect.top, width: Math.max(rect.width, 1), height: Math.max(rect.height, 1) }
+                });
+              }
+
+              window.wmf = window.wmf || {};
+              window.wmf.elementLocation = window.wmf.elementLocation || {};
+              window.wmf.elementLocation.getFirstOnScreenSection = firstVisibleSection;
+              window.wmf.findInPage = window.wmf.findInPage || {};
+              window.wmf.findInPage.removeSearchTermHighlights = function() {};
 
               window.pcs = window.pcs || {};
               window.pcs.c1 = window.pcs.c1 || {};
@@ -134,8 +283,11 @@ private enum WikiYeshivaArticleAdapter {
                 setEditButtons: function() {},
                 prepareForScrollToAnchor: function(anchor) {
                   var id = String(anchor || '');
-                  var el = document.getElementById(id) || document.querySelector('[name="' + CSS.escape(id) + '"]');
-                  if (el) { el.scrollIntoView(); }
+                  var element = elementForAnchor(id);
+                  if (element) {
+                    element.scrollIntoView();
+                    setTimeout(function() { postScrollToAnchor(id); }, 0);
+                  }
                 },
                 removeHighlightsFromHighlightedElements: function() {}
               };
@@ -151,8 +303,10 @@ private enum WikiYeshivaArticleAdapter {
               }, true);
 
               document.addEventListener('DOMContentLoaded', function() {
+                cleanupMediaWikiHTML();
+                window.__wikiSiteTOCItems = buildTableOfContents();
                 post('setup');
-                post('tableOfContents', []);
+                post('tableOfContents', { tableOfContents: window.__wikiSiteTOCItems });
                 post('final_setup');
               });
             })();
@@ -161,14 +315,26 @@ private enum WikiYeshivaArticleAdapter {
         <body>
           <main>
             <h1>\(escapedTitle)</h1>
-            <article id="content">\(renderedHTML)</article>
+            <article id="content">\(normalizedHTML)</article>
           </main>
         </body>
         </html>
         """
     }
 
-    private static func htmlEscaped(_ value: String) -> String {
+    private func normalize(_ html: String) -> String {
+        var result = html
+        result = removingMatches("<script[\\s\\S]*?</script>", from: result)
+        result = removingMatches("<iframe[\\s\\S]*?</iframe>", from: result)
+        result = removingMatches("<noscript[\\s\\S]*?</noscript>", from: result)
+        return result
+    }
+
+    private func removingMatches(_ pattern: String, from value: String) -> String {
+        return value.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive], range: nil)
+    }
+
+    private func htmlEscaped(_ value: String) -> String {
         return value
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "<", with: "&lt;")
@@ -214,8 +380,8 @@ extension SchemeHandler: WKURLSchemeHandler {
         
         addSchemeTask(urlSchemeTask: urlSchemeTask)
 
-        if WikiYeshivaArticleAdapter.canHandleMobileHTMLRequest(request.url) {
-            kickOffWikiYeshivaArticleAdapterTask(request: request, urlSchemeTask: urlSchemeTask)
+        if let adapter = WikiSiteRegistry.articleAdapter(forMobileHTMLRequest: request.url) {
+            kickOffAdaptedArticleTask(request: request, urlSchemeTask: urlSchemeTask, adapter: adapter)
             return
         }
 
@@ -307,11 +473,11 @@ private extension SchemeHandler {
         return type.hasPrefix("image")
     }
 
-    func kickOffWikiYeshivaArticleAdapterTask(request: URLRequest, urlSchemeTask: WKURLSchemeTask) {
+    func kickOffAdaptedArticleTask(request: URLRequest, urlSchemeTask: WKURLSchemeTask, adapter: WikiArticleContentAdapter) {
         guard schemeTaskIsActive(urlSchemeTask: urlSchemeTask),
               let requestURL = request.url,
-              let renderRequest = WikiYeshivaArticleAdapter.renderRequest(from: requestURL),
-              let articleTitle = WikiYeshivaArticleAdapter.title(from: requestURL) else {
+              let upstreamRequest = adapter.upstreamRequest(forMobileHTMLRequest: requestURL),
+              let articleTitle = adapter.title(fromMobileHTMLRequest: requestURL) else {
             urlSchemeTask.didFailWithError(SchemeHandlerError.invalidParameters)
             removeSchemeTask(urlSchemeTask: urlSchemeTask)
             return
@@ -319,7 +485,7 @@ private extension SchemeHandler {
 
         SessionsFunnel.shared.setPageLoadStartTime()
 
-        let dataTask = URLSession.shared.dataTask(with: renderRequest) { [weak self, weak urlSchemeTask] data, response, error in
+        let dataTask = URLSession.shared.dataTask(with: upstreamRequest) { [weak self, weak urlSchemeTask] data, response, error in
             DispatchQueue.main.async {
                 guard let self = self, let urlSchemeTask = urlSchemeTask else {
                     return
@@ -341,8 +507,8 @@ private extension SchemeHandler {
                 guard let httpResponse = response as? HTTPURLResponse,
                       HTTPStatusCode.isSuccessful(httpResponse.statusCode),
                       let data = data,
-                      let renderedHTML = String(data: data, encoding: .utf8),
-                      let adaptedData = WikiYeshivaArticleAdapter.mobileHTMLDocument(renderedHTML: renderedHTML, title: articleTitle).data(using: .utf8),
+                      let upstreamHTML = String(data: data, encoding: .utf8),
+                      let adaptedData = adapter.adaptedMobileHTMLDocument(from: upstreamHTML, title: articleTitle).data(using: .utf8),
                       let adaptedResponse = HTTPURLResponse(url: requestURL, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: [
                         "Content-Type": "text/html; charset=utf-8",
                         "Cache-Control": "no-cache"
