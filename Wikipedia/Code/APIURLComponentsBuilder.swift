@@ -116,19 +116,35 @@ public struct APIURLComponentsBuilder {
                 }
             }
         }
+
+        private static func baseAPIPathComponents(forWikiHost wikiHost: String?) -> [String] {
+            guard wikiHost == "www.yeshiva.org.il" else {
+                return ["w", "api.php"]
+            }
+
+            return ["wiki", "api.php"]
+        }
+
+        private static func baseRestPathComponents(forWikiHost wikiHost: String?) -> [String] {
+            guard wikiHost == "www.yeshiva.org.il" else {
+                return ["w", "rest.php"]
+            }
+
+            return ["wiki", "rest.php"]
+        }
         
         private static func productionRestBuilder(withWikiHost wikiHost: String? = nil) -> APIURLComponentsBuilder {
             var components = URLComponents()
             components.host = wikiHost ?? Configuration.Domain.englishWikipedia
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiRestAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: baseRestPathComponents(forWikiHost: components.host))
         }
         
         private static func productionBuilder(withWikiHost wikiHost: String? = nil) -> APIURLComponentsBuilder {
             var components = URLComponents()
             components.host = wikiHost ?? Configuration.Domain.metaWiki
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: baseAPIPathComponents(forWikiHost: components.host))
         }
     }
     
@@ -153,14 +169,14 @@ public struct APIURLComponentsBuilder {
             var components = URLComponents()
             components.host =  "www.\(Configuration.Domain.wikidata)"
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: ["w", "api.php"])
         }
         
         private static func betaLabsBuilder() -> APIURLComponentsBuilder {
             var components = URLComponents()
             components.host = Configuration.Domain.wikidataBetaLabs
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: ["w", "api.php"])
         }
     }
     
@@ -185,14 +201,14 @@ public struct APIURLComponentsBuilder {
             var components = URLComponents()
             components.host =  "commons.\(Configuration.Domain.wikimedia)"
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: ["w", "api.php"])
         }
         
         private static func betaLabsBuilder() -> APIURLComponentsBuilder {
             var components = URLComponents()
             components.host = Configuration.Domain.commonsBetaLabs
             components.scheme = Configuration.Scheme.https
-            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Configuration.Path.mediaWikiAPIComponents)
+            return APIURLComponentsBuilder(hostComponents: components, basePathComponents: ["w", "api.php"])
         }
     }
 }
