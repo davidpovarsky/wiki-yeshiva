@@ -179,16 +179,17 @@ private struct WikiYeshivaArticleAdapter: WikiArticleContentAdapter {
 
               function safeSelectorForId(id) {
                 if (window.CSS && CSS.escape) { return '#' + CSS.escape(id); }
-                return '#' + String(id).replace(/([ #;?%&,.+*~\\':"!^$[\]()=>|/@])/g, '\\$1');
+                return '#' + String(id).replace(/[^A-Za-z0-9_-]/g, '');
               }
 
               function elementForAnchor(anchor) {
                 if (!anchor) { return null; }
-                return document.getElementById(anchor) || document.querySelector('[name="' + anchor.replace(/"/g, '\\"') + '"]') || document.querySelector(safeSelectorForId(anchor));
+                var cleanAnchor = String(anchor).split('"').join('');
+                return document.getElementById(anchor) || document.querySelector('[name="' + cleanAnchor + '"]') || document.querySelector(safeSelectorForId(anchor));
               }
 
               function textForElement(element) {
-                return (element && element.textContent ? element.textContent : '').replace(/\s+/g, ' ').trim();
+                return (element && element.textContent ? element.textContent : '').trim();
               }
 
               function cleanupMediaWikiHTML() {
@@ -202,7 +203,7 @@ private struct WikiYeshivaArticleAdapter: WikiArticleContentAdapter {
                 return Array.prototype.map.call(links, function(link, index) {
                   var listItem = link.closest ? link.closest('li') : null;
                   var className = listItem ? listItem.className : '';
-                  var levelMatch = String(className).match(/toclevel-(\d+)/);
+                  var levelMatch = String(className).match(/toclevel-([0-9]+)/);
                   var level = levelMatch ? parseInt(levelMatch[1], 10) : 1;
                   var href = link.getAttribute('href') || '';
                   var anchor = decodeAnchor(href.split('#').pop());
