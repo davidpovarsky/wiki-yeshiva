@@ -38,6 +38,10 @@
 
 + (NSString *)wmf_hostWithDomain:(NSString *)domain
                        subDomain:(NSString *)subDomain {
+    if ([domain isEqualToString:@"www.yeshiva.org.il"]) {
+        return domain;
+    }
+
     NSMutableArray *hostComponents = [NSMutableArray array];
     if (subDomain) {
         [hostComponents addObject:subDomain];

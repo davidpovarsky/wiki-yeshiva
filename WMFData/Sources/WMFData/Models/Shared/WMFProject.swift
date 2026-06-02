@@ -104,7 +104,7 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
 
         switch self {
         case .wikipedia(let language):
-            components.host = "\(language.languageCode).wikipedia.org"
+            components.host = "www.yeshiva.org.il"
         case .commons:
             components.host = "commons.wikimedia.org"
         case .wikidata:

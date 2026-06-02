@@ -85,7 +85,7 @@ public class Configuration: NSObject {
         
         return Configuration(
             environment: .production,
-            defaultSiteDomain: Domain.wikipedia,
+            defaultSiteDomain: "www.yeshiva.org.il",
             wikipediaCookieDomain: Domain.wikipedia.withDotPrefix,
             centralAuthCookieTargetDomains: centralAuthCookieTargetDomains,
             pageContentServiceAPIType: .production,
@@ -97,7 +97,7 @@ public class Configuration: NSObject {
     
     private static func staging(options: StagingOptions) -> Configuration {
         
-        let defaultSiteDomain = options.contains(.betaCluster) ? Domain.wikipediaBetaLabs : Domain.wikipedia
+        let defaultSiteDomain = options.contains(.betaCluster) ? "www.yeshiva.org.il" : "www.yeshiva.org.il"
         let wikipediaCookieDomain = options.contains(.betaCluster) ? Domain.wikipediaBetaLabs.withDotPrefix : Domain.wikipedia.withDotPrefix
         let wikidataCookieDomain = options.contains(.betaCluster) ? Domain.wikidataBetaLabs.withDotPrefix : Domain.wikidata.withDotPrefix
         let commonsCookieDomain = options.contains(.betaCluster) ? Domain.commonsBetaLabs.withDotPrefix : Domain.commons.withDotPrefix
@@ -130,7 +130,7 @@ public class Configuration: NSObject {
         
         return Configuration(
             environment: .local(options),
-            defaultSiteDomain: Domain.wikipedia,
+            defaultSiteDomain: "www.yeshiva.org.il",
             wikipediaCookieDomain: Domain.wikipedia.withDotPrefix,
             centralAuthCookieTargetDomains: centralAuthCookieTargetDomains,
             pageContentServiceAPIType: pcsApiType,
@@ -176,8 +176,8 @@ public class Configuration: NSObject {
     struct Path {
         static let wikiResourceComponent = ["wiki"]
         static let restBaseAPIComponents = ["api", "rest_v1"]
-        static let mediaWikiAPIComponents = ["w", "api.php"]
-        static let mediaWikiRestAPIComponents = ["w", "rest.php"]
+        static let mediaWikiAPIComponents = ["wiki", "api.php"]
+        static let mediaWikiRestAPIComponents = ["wiki", "rest.php"]
         static let expandedWikiResourceComponents = ["w", "index.php"]
     }
     
@@ -218,7 +218,7 @@ public class Configuration: NSObject {
         self.centralAuthCookieSourceDomain = self.wikipediaCookieDomain
         self.centralAuthCookieTargetDomains = centralAuthCookieTargetDomains
         
-        self.wikipediaDomains = [Domain.wikipedia, Domain.wikipediaBetaLabs, Domain.appsLabs]
+        self.wikipediaDomains = ["www.yeshiva.org.il", Domain.wikipediaBetaLabs, Domain.appsLabs]
         self.inAppWebViewRoutingDomains = wikipediaDomains + [Domain.mediaWiki, Domain.wikidata, Domain.wikimedia, Domain.wikimediafoundation]
         self.pageContentServiceAPIType = pageContentServiceAPIType
         self.feedContentAPIType = feedContentAPIType
