@@ -63,12 +63,7 @@ import SwiftUI
             item = UIBarButtonItem(barButtonSystemItem: .cancel, target: config.target, action: config.action)
 
         case .prominentCheck:
-            let image = WMFSFSymbolIcon.for(symbol: .checkmark, font: WMFFont.navigationBarCloseButtonFont)
-            if #available(iOS 26.0, *) {
-                item = UIBarButtonItem(image: image, style: .prominent, target: config.target, action: config.action)
-            } else {
-                item = UIBarButtonItem(barButtonSystemItem: .done, target: config.target, action: config.action)
-            }
+            item = UIBarButtonItem(barButtonSystemItem: .done, target: config.target, action: config.action)
             item.tintColor = theme.link
         }
 
@@ -89,23 +84,11 @@ import SwiftUI
         switch config.imageType {
         case .plainX:
             button.tintColor = theme.text
-            if #available(iOS 26.0, *) {
-                var buttonConfig = UIButton.Configuration.glass()
-                buttonConfig.image = WMFSFSymbolIcon.for(symbol: .close, font: WMFFont.navigationBarCloseButtonFont)
-                button.configuration = buttonConfig
-            } else {
-                button.setImage(WMFSFSymbolIcon.for(symbol: .close, font: WMFFont.navigationBarCloseButtonFont), for: .normal)
-            }
+            button.setImage(WMFSFSymbolIcon.for(symbol: .close, font: WMFFont.navigationBarCloseButtonFont), for: .normal)
 
         case .prominentCheck:
             button.tintColor = theme.link
-            if #available(iOS 26.0, *) {
-                var buttonConfig = UIButton.Configuration.prominentGlass()
-                buttonConfig.image = WMFSFSymbolIcon.for(symbol: .checkmark, font: WMFFont.navigationBarCloseButtonFont)
-                button.configuration = buttonConfig
-            } else {
-                button.setImage(WMFSFSymbolIcon.for(symbol: .checkmark, font: WMFFont.navigationBarCloseButtonFont), for: .normal)
-            }
+            button.setImage(WMFSFSymbolIcon.for(symbol: .checkmark, font: WMFFont.navigationBarCloseButtonFont), for: .normal)
         }
 
         button.tag = config.imageType.tag
@@ -153,30 +136,18 @@ public struct WMFLargeCloseButton: View {
     }
 
     private var plainXButton: some View {
-        let base = Button { action?() } label: {
+        Button { action?() } label: {
             Image(uiImage: uiImage)
         }
         .frame(width: 44, height: 44)
         .tint(imageType.swiftUITintColor(theme: theme))
-
-        if #available(iOS 26.0, *) {
-            return base.glassEffect(.regular)
-        } else {
-            return base
-        }
     }
 
     private var prominentCheckButton: some View {
-        let base = Button { action?() } label: {
+        Button { action?() } label: {
             Image(uiImage: uiImage)
         }
         .frame(width: 44, height: 44)
         .tint(imageType.swiftUITintColor(theme: theme))
-
-        if #available(iOS 26.0, *) {
-            return base.buttonStyle(.glassProminent)
-        } else {
-            return base
-        }
     }
 }
