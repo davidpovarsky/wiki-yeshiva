@@ -10,6 +10,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ios-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Wikipedia iOS
@@ -21,7 +25,17 @@ jobs:
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s /Applications/Xcode.app
+          if [ -d /Applications/Xcode_26.3.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.3.app
+          elif [ -d /Applications/Xcode_26.2.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.2.app
+          elif [ -d /Applications/Xcode_26.1.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.1.1.app
+          elif [ -d /Applications/Xcode_26.0.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0.1.app
+          else
+            sudo xcode-select -s /Applications/Xcode.app
+          fi
           xcodebuild -version
 
       - name: Generate open source build configuration
