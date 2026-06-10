@@ -1,10 +1,6 @@
 name: iOS Build
 
 on:
-  push:
-    branches:
-      - main
-      - wiki-source-picker-ci
   pull_request:
     branches:
       - main
@@ -55,13 +51,35 @@ jobs:
             -scheme Wikipedia \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
+            -derivedDataPath Build \
             ONLY_ACTIVE_ARCH=YES \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee xcodebuild.log
 
+      - name: Package simulator app
+        run: |
+          set -e
+          app_path=$(find Build/Build/Products/Debug-iphonesimulator -maxdepth 2 -name '*.app' -type d | head -n 1)
+          if [ -z "$app_path" ]; then
+            echo 'No .app bundle found in simulator build products.'
+            find Build/Build/Products -maxdepth 4 -type d || true
+            exit 1
+          fi
+          mkdir -p artifacts
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" artifacts/Wikipedia-simulator-app.zip
+          ls -lh artifacts
+
+      - name: Upload simulator app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wikipedia-simulator-app
+          path: artifacts/Wikipedia-simulator-app.zip
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Print build errors
         if: failure()
         run: |
           echo '---- xcodebuild errors ----'
-          grep -n -i -E '(^|[^A-Za-z])(error:|fatal error:|Command .* failed|BUILD FAILED)' xcodebuild.log | tail -80 || true
+          grep -n -i -E '(^|[^A-Za-z])(error:|fatal error:|Command .* failed|BUILD FAILED|No .app bundle found)' xcodebuild.log | tail -80 || true
