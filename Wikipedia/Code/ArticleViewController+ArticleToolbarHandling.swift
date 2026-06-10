@@ -1,6 +1,7 @@
 import UIKit
 import WMFComponents
 import WMFData
+import WMFNativeLocalizations
 
 extension ArticleViewController: ArticleToolbarHandling {
     var navigationToolbar: UIToolbar? {
