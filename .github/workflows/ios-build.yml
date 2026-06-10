@@ -24,6 +24,11 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
 
+      - name: Generate open source build configuration
+        run: |
+          bash scripts/setup_bundle_id ci
+          test -f Configurations/OpenSourceDebug.xcconfig
+
       - name: Show available schemes
         run: |
           xcodebuild -list -project Wikipedia.xcodeproj
