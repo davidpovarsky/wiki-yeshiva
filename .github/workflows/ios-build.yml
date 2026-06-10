@@ -41,6 +41,13 @@ jobs:
             -scheme Wikipedia \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
+            ONLY_ACTIVE_ARCH=YES \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build
+            build 2>&1 | tee xcodebuild.log
+
+      - name: Print build errors
+        if: failure()
+        run: |
+          echo '---- xcodebuild errors ----'
+          grep -n -i -E '(^|[^A-Za-z])(error:|fatal error:|Command .* failed|BUILD FAILED)' xcodebuild.log | tail -80 || true
