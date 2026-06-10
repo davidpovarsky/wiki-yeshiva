@@ -80,7 +80,22 @@ extension ArticleViewController: ArticleToolbarHandling {
     
     func showLanguagePicker(from controller: ArticleToolbarController) {
         NavigationEventsFunnel.shared.logEvent(action: .articleToolbarLang)
-        showLanguages()
+        let alert = UIAlertController(title: "Language and Wiki", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Article languages", style: .default, handler: { [weak self] _ in
+            self?.showLanguages()
+        }))
+        alert.addAction(UIAlertAction(title: "Choose Wiki source", style: .default, handler: { [weak self] _ in
+            self?.presentWikiSourcePicker(from: controller)
+        }))
+        alert.addAction(UIAlertAction(title: CommonStrings.cancelActionTitle, style: .cancel))
+
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = controller.languagesButton
+            popover.sourceView = view
+            popover.sourceRect = view.bounds
+        }
+
+        present(alert, animated: true)
     }
 
     func showWikiSourcePicker(from controller: ArticleToolbarController) {
@@ -142,7 +157,7 @@ private extension ArticleViewController {
         alert.addAction(UIAlertAction(title: CommonStrings.cancelActionTitle, style: .cancel))
 
         if let popover = alert.popoverPresentationController {
-            popover.barButtonItem = controller.moreButton
+            popover.barButtonItem = controller.languagesButton
             popover.sourceView = view
             popover.sourceRect = view.bounds
         }
