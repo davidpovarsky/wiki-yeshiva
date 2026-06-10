@@ -1,5 +1,25 @@
 import SwiftUI
 
+@available(iOS 26.0, *)
+fileprivate struct GlassProminentButton: View {
+    let configuration: ButtonStyleConfiguration
+    let layout: CapsuleButtonStyle.Layout
+    let height: CGFloat
+    let tintColor: Color
+
+    var body: some View {
+        Button {
+            // Empty action - the parent Button's action is what actually fires
+        } label: {
+            configuration.label
+                .applyLayout(layout: layout, height: height)
+        }
+        .buttonStyle(.glassProminent)
+        .tint(tintColor)
+        .allowsHitTesting(false)
+    }
+}
+
 fileprivate extension View {
     @ViewBuilder
     func applyLayout(layout: CapsuleButtonStyle.Layout, height: CGFloat) -> some View {
@@ -69,7 +89,34 @@ public struct CapsuleButtonStyle: ButtonStyle {
             background = forceBackgroundColor ?? .clear
         case .glass:
             foreground = forceForegroundColor ?? theme.paperBackground
-            background = forceBackgroundColor ?? theme.link
+            background = forceBackgroundColor ?? .clear
+        }
+
+        // Glass style uses the glassProminent button style - glass material + background color
+        if kind == .glass {
+            if #available(iOS 26.0, *) {
+                return AnyView(
+                    GlassProminentButton(
+                        configuration: configuration,
+                        layout: layout,
+                        height: height,
+                        tintColor: Color(uiColor: theme.link)
+                    )
+                )
+            } else {
+                return AnyView(
+                    configuration.label
+                        .foregroundStyle(Color(uiColor: theme.paperBackground))
+                        .applyLayout(layout: layout, height: height)
+                        .background(
+                            Capsule()
+                                    .fill(Color(uiColor: theme.link))
+
+                        )
+                        .clipShape(Capsule())
+                        .opacity(configuration.isPressed ? 0.88 : 1.0)
+                )
+            }
         }
 
         return AnyView(
