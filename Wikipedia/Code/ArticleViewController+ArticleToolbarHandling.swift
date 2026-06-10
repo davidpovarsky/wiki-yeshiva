@@ -146,7 +146,7 @@ private extension ArticleViewController {
 
         let languageCode = articleURL.wmf_languageCode ?? dataStore.languageLinkController.appLanguage?.languageCode ?? "he"
         let sources = WikiReadingSource.defaultSources(languageCode: languageCode)
-        let alert = UIAlertController(title: "Choose Wiki", message: "Open this title on another wiki source.", preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "Choose Wiki", message: "Only Wikipedia can currently open in the native reader. Other wiki sources need a converter adapter before they can render natively.", preferredStyle: .actionSheet)
 
         for source in sources {
             let title = source.matches(articleURL) ? "✓ \(source.displayName)" : source.displayName
@@ -167,6 +167,11 @@ private extension ArticleViewController {
     }
 
     func open(currentTitle: String, in source: WikiReadingSource, languageCode: String) {
+        guard source.supportsNativeReader else {
+            presentUnsupportedWikiAlert(source: source)
+            return
+        }
+
         guard let navigationController,
               let newURL = source.articleURL(for: currentTitle, languageCode: languageCode) else {
             return
@@ -187,6 +192,16 @@ private extension ArticleViewController {
         )
         articleCoordinator.start()
     }
+
+    func presentUnsupportedWikiAlert(source: WikiReadingSource) {
+        let alert = UIAlertController(
+            title: "\(source.displayName) needs an adapter",
+            message: "This source is listed so we can build support for it, but it cannot be opened safely in the native reader yet. The next step is to add a converter that turns this wiki source into the app's internal mobile-html format.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: CommonStrings.okTitle, style: .default))
+        present(alert, animated: true)
+    }
 }
 
 private struct WikiReadingSource {
@@ -197,18 +212,19 @@ private struct WikiReadingSource {
 
     let displayName: String
     let style: PathStyle
+    let supportsNativeReader: Bool
 
     static func defaultSources(languageCode: String) -> [WikiReadingSource] {
         return [
-            WikiReadingSource(displayName: "Wikipedia", style: .languageSubdomain(rootDomain: "wikipedia.org")),
-            WikiReadingSource(displayName: "Wiktionary", style: .languageSubdomain(rootDomain: "wiktionary.org")),
-            WikiReadingSource(displayName: "Wikisource", style: .languageSubdomain(rootDomain: "wikisource.org")),
-            WikiReadingSource(displayName: "Wikiquote", style: .languageSubdomain(rootDomain: "wikiquote.org")),
-            WikiReadingSource(displayName: "Wikibooks", style: .languageSubdomain(rootDomain: "wikibooks.org")),
-            WikiReadingSource(displayName: "Wikiversity", style: .languageSubdomain(rootDomain: "wikiversity.org")),
-            WikiReadingSource(displayName: "Wikinews", style: .languageSubdomain(rootDomain: "wikinews.org")),
-            WikiReadingSource(displayName: "Wikivoyage", style: .languageSubdomain(rootDomain: "wikivoyage.org")),
-            WikiReadingSource(displayName: "WikiYeshiva", style: .fixedHost(host: "www.yeshiva.org.il", articlePathPrefix: "/wiki/"))
+            WikiReadingSource(displayName: "Wikipedia", style: .languageSubdomain(rootDomain: "wikipedia.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wiktionary", style: .languageSubdomain(rootDomain: "wiktionary.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikisource", style: .languageSubdomain(rootDomain: "wikisource.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikiquote", style: .languageSubdomain(rootDomain: "wikiquote.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikibooks", style: .languageSubdomain(rootDomain: "wikibooks.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikiversity", style: .languageSubdomain(rootDomain: "wikiversity.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikinews", style: .languageSubdomain(rootDomain: "wikinews.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "Wikivoyage", style: .languageSubdomain(rootDomain: "wikivoyage.org"), supportsNativeReader: false),
+            WikiReadingSource(displayName: "WikiYeshiva", style: .fixedHost(host: "www.yeshiva.org.il", articlePathPrefix: "/wiki/"), supportsNativeReader: false)
         ]
     }
 
