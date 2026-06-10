@@ -146,7 +146,7 @@ private extension ArticleViewController {
 
         let languageCode = articleURL.wmf_languageCode ?? dataStore.languageLinkController.appLanguage?.languageCode ?? "he"
         let sources = WikiReadingSource.defaultSources(languageCode: languageCode)
-        let alert = UIAlertController(title: "Choose Wiki", message: "Only Wikipedia can currently open in the native reader. Other wiki sources need a converter adapter before they can render natively.", preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "Choose Wiki", message: "Open this title on another wiki source. WikiYeshiva is routed through the adapter layer.", preferredStyle: .actionSheet)
 
         for source in sources {
             let title = source.matches(articleURL) ? "✓ \(source.displayName)" : source.displayName
@@ -217,14 +217,14 @@ private struct WikiReadingSource {
     static func defaultSources(languageCode: String) -> [WikiReadingSource] {
         return [
             WikiReadingSource(displayName: "Wikipedia", style: .languageSubdomain(rootDomain: "wikipedia.org"), supportsNativeReader: true),
-            WikiReadingSource(displayName: "Wiktionary", style: .languageSubdomain(rootDomain: "wiktionary.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikisource", style: .languageSubdomain(rootDomain: "wikisource.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikiquote", style: .languageSubdomain(rootDomain: "wikiquote.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikibooks", style: .languageSubdomain(rootDomain: "wikibooks.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikiversity", style: .languageSubdomain(rootDomain: "wikiversity.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikinews", style: .languageSubdomain(rootDomain: "wikinews.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "Wikivoyage", style: .languageSubdomain(rootDomain: "wikivoyage.org"), supportsNativeReader: false),
-            WikiReadingSource(displayName: "WikiYeshiva", style: .fixedHost(host: "www.yeshiva.org.il", articlePathPrefix: "/wiki/"), supportsNativeReader: false)
+            WikiReadingSource(displayName: "Wiktionary", style: .languageSubdomain(rootDomain: "wiktionary.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikisource", style: .languageSubdomain(rootDomain: "wikisource.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikiquote", style: .languageSubdomain(rootDomain: "wikiquote.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikibooks", style: .languageSubdomain(rootDomain: "wikibooks.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikiversity", style: .languageSubdomain(rootDomain: "wikiversity.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikinews", style: .languageSubdomain(rootDomain: "wikinews.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "Wikivoyage", style: .languageSubdomain(rootDomain: "wikivoyage.org"), supportsNativeReader: true),
+            WikiReadingSource(displayName: "WikiYeshiva", style: .fixedHost(host: "www.yeshiva.org.il", articlePathPrefix: "/wiki/"), supportsNativeReader: true)
         ]
     }
 
