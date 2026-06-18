@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Wikipedia iOS
+    name: Build Wikipedia iOS IPA
     runs-on: macos-15
 
     steps:
@@ -43,38 +43,40 @@ jobs:
         run: |
           xcodebuild -list -project Wikipedia.xcodeproj
 
-      - name: Build app for simulator
+      - name: Build app for iOS device
         run: |
           set -o pipefail
           xcodebuild \
             -project Wikipedia.xcodeproj \
             -scheme Wikipedia \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'generic/platform=iOS' \
             -configuration Debug \
             -derivedDataPath Build \
-            ONLY_ACTIVE_ARCH=YES \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
             build 2>&1 | tee xcodebuild.log
 
-      - name: Package simulator app
+      - name: Package unsigned IPA
         run: |
           set -e
-          app_path=$(find Build/Build/Products/Debug-iphonesimulator -maxdepth 2 -name '*.app' -type d | head -n 1)
+          app_path=$(find Build/Build/Products/Debug-iphoneos -maxdepth 2 -name '*.app' -type d | head -n 1)
           if [ -z "$app_path" ]; then
-            echo 'No .app bundle found in simulator build products.'
+            echo 'No .app bundle found in device build products.'
             find Build/Build/Products -maxdepth 4 -type d || true
             exit 1
           fi
-          mkdir -p artifacts
-          ditto -c -k --sequesterRsrc --keepParent "$app_path" artifacts/Wikipedia-simulator-app.zip
+          rm -rf artifacts Payload
+          mkdir -p artifacts Payload
+          cp -R "$app_path" Payload/
+          /usr/bin/zip -qry artifacts/Wikipedia-unsigned.ipa Payload
           ls -lh artifacts
 
-      - name: Upload simulator app artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Wikipedia-simulator-app
-          path: artifacts/Wikipedia-simulator-app.zip
+          name: Wikipedia-unsigned-ipa
+          path: artifacts/Wikipedia-unsigned.ipa
           if-no-files-found: error
           retention-days: 7
 
