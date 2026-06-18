@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+  actions: read
+
 concurrency:
   group: ios-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -71,6 +75,7 @@ jobs:
           cp -R "$app_path" Payload/
           /usr/bin/zip -qry artifacts/Wikipedia-unsigned.ipa Payload
           ls -lh artifacts
+          file artifacts/Wikipedia-unsigned.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
@@ -79,6 +84,18 @@ jobs:
           path: artifacts/Wikipedia-unsigned.ipa
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish direct IPA release asset
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ipa-${{ github.run_number }}
+        run: |
+          set -e
+          gh release create "$TAG_NAME" artifacts/Wikipedia-unsigned.ipa \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Unsigned IPA $TAG_NAME" \
+            --notes "Unsigned IPA built from $GITHUB_SHA. Download the .ipa asset directly from this release."
 
       - name: Print build errors
         if: failure()
