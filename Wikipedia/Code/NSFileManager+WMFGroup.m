@@ -31,6 +31,7 @@ NSString *const WMFApplicationGroupIdentifier = @QUOTE(WMF_APP_GROUP_IDENTIFIER)
 #pragma mark - Wiki source menu layer
 
 static NSString * const WMFWikiSourceSelectionDefaultsKey = @"WMFSelectedWikiSourceIdentifier";
+static void WMFConfigureExploreWikiSourceMenu(UIViewController *viewController);
 
 typedef void (*WMFExploreViewWillAppearIMP)(id, SEL, BOOL);
 static WMFExploreViewWillAppearIMP WMFOriginalExploreViewWillAppear = NULL;
