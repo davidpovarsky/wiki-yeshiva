@@ -1,0 +1,104 @@
+name: iOS Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ios-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Wikipedia iOS IPA
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_26.3.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.3.app
+          elif [ -d /Applications/Xcode_26.2.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.2.app
+          elif [ -d /Applications/Xcode_26.1.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.1.1.app
+          elif [ -d /Applications/Xcode_26.0.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0.1.app
+          else
+            sudo xcode-select -s /Applications/Xcode.app
+          fi
+          xcodebuild -version
+
+      - name: Generate open source build configuration
+        run: |
+          bash scripts/setup_bundle_id ci
+          test -f Configurations/OpenSourceDebug.xcconfig
+
+      - name: Show available schemes
+        run: |
+          xcodebuild -list -project Wikipedia.xcodeproj
+
+      - name: Build app for iOS device
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Wikipedia.xcodeproj \
+            -scheme Wikipedia \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug \
+            -derivedDataPath Build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            build 2>&1 | tee xcodebuild.log
+
+      - name: Package unsigned IPA
+        run: |
+          set -e
+          app_path=$(find Build/Build/Products/Debug-iphoneos -maxdepth 2 -name '*.app' -type d | head -n 1)
+          if [ -z "$app_path" ]; then
+            echo 'No .app bundle found in device build products.'
+            find Build/Build/Products -maxdepth 4 -type d || true
+            exit 1
+          fi
+          rm -rf artifacts Payload
+          mkdir -p artifacts Payload
+          cp -R "$app_path" Payload/
+          /usr/bin/zip -qry artifacts/Wikipedia-unsigned.ipa Payload
+          ls -lh artifacts
+          file artifacts/Wikipedia-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wikipedia-unsigned-ipa
+          path: artifacts/Wikipedia-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish direct IPA release asset
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ipa-${{ github.run_number }}
+        run: |
+          set -e
+          gh release create "$TAG_NAME" artifacts/Wikipedia-unsigned.ipa \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Unsigned IPA $TAG_NAME" \
+            --notes "Unsigned IPA built from $GITHUB_SHA. Download the .ipa asset directly from this release."
+
+      - name: Print build errors
+        if: failure()
+        run: |
+          echo '---- xcodebuild errors ----'
+          grep -n -i -E '(^|[^A-Za-z])(error:|fatal error:|Command .* failed|BUILD FAILED|No .app bundle found)' xcodebuild.log | tail -80 || true
