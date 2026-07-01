@@ -31,7 +31,9 @@ NSString *const WMFApplicationGroupIdentifier = @QUOTE(WMF_APP_GROUP_IDENTIFIER)
 #pragma mark - Wiki source menu layer
 
 static NSString * const WMFWikiSourceSelectionDefaultsKey = @"WMFSelectedWikiSourceIdentifier";
+static NSString * const WMFWikiSourceSelectionDidChangeNotification = @"WMFWikiSourceSelectionDidChangeNotification";
 static void WMFConfigureExploreWikiSourceMenu(UIViewController *viewController);
+static void WMFUpdateExploreFeedContentSourcesIfPossible(UIViewController *viewController);
 
 typedef void (*WMFExploreViewWillAppearIMP)(id, SEL, BOOL);
 static WMFExploreViewWillAppearIMP WMFOriginalExploreViewWillAppear = NULL;
@@ -121,7 +123,9 @@ static UIMenu *WMFMakeExploreWikiSourceMenu(UIViewController *viewController) AP
         UIAction *action = [UIAction actionWithTitle:title image:nil identifier:nil handler:^(__kindof UIAction * _Nonnull action) {
             [[NSUserDefaults standardUserDefaults] setObject:identifier forKey:WMFWikiSourceSelectionDefaultsKey];
             [[NSUserDefaults standardUserDefaults] synchronize];
+            [[NSNotificationCenter defaultCenter] postNotificationName:WMFWikiSourceSelectionDidChangeNotification object:nil];
             WMFConfigureExploreWikiSourceMenu(viewController);
+            WMFUpdateExploreFeedContentSourcesIfPossible(viewController);
         }];
         action.state = [identifier isEqualToString:selectedIdentifier] ? UIMenuElementStateOn : UIMenuElementStateOff;
         [actions addObject:action];
@@ -138,5 +142,16 @@ static void WMFConfigureExploreWikiSourceMenu(UIViewController *viewController) 
         wikiMenuItem.accessibilityLabel = [NSString stringWithFormat:@"Choose Wiki source. Current source: %@", WMFWikiSourceTitleForIdentifier(WMFSelectedWikiSourceIdentifier())];
         wikiMenuItem.tintColor = existingItem.tintColor;
         viewController.navigationItem.leftBarButtonItem = wikiMenuItem;
+    }
+}
+
+static void WMFUpdateExploreFeedContentSourcesIfPossible(UIViewController *viewController) {
+    @try {
+        id dataStore = [viewController valueForKey:@"dataStore"];
+        id feedContentController = [dataStore valueForKey:@"feedContentController"];
+        if ([feedContentController respondsToSelector:@selector(updateContentSources)]) {
+            [feedContentController performSelector:@selector(updateContentSources)];
+        }
+    } @catch (__unused NSException *exception) {
     }
 }
