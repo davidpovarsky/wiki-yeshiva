@@ -91,7 +91,6 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
         get {
             let baseSiteURL = _siteURL
                 ?? searchLanguageBarViewController?.selectedSiteURL
-                ?? MWKDataStore.shared().primarySiteURL
                 ?? NSURL.wmf_URLWithDefaultSiteAndCurrentLocale()
 
             return WikiSourceSelection.siteURL(for: baseSiteURL)

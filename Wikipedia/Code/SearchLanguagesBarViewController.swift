@@ -164,7 +164,7 @@ class SearchLanguagesBarViewController: ThemeableViewController, WMFPreferredLan
     
     var selectedSiteURL: URL? {
         let selectedLanguageLink = languageBarLanguages().first { $0.contentLanguageCode == selectedSearchContentLanguageCode }
-        return WikiSourceSelection.siteURL(for: selectedLanguageLink?.siteURL)
+        return selectedLanguageLink?.siteURL
     }
     
     func moveScrollViewToStart() {

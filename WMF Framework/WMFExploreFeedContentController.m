@@ -90,6 +90,10 @@ static NSURL *WMFMappedWikiSiteURL(NSURL *baseSiteURL) {
     return WMFMakeWikiSiteURL(host);
 }
 
+static BOOL WMFSelectedWikiIsWikipedia(void) {
+    return [WMFSelectedWikiIdentifier() isEqualToString:@"wikipedia"];
+}
+
 @implementation WMFExploreFeedContentController
 
 @synthesize exploreFeedPreferences = _exploreFeedPreferences;
@@ -212,6 +216,11 @@ static NSURL *WMFMappedWikiSiteURL(NSURL *baseSiteURL) {
         NSMutableArray *mutableContentSources = [NSMutableArray arrayWithCapacity:2 + siteURLs.count * 7];
         [mutableContentSources addObject:[[WMFRelatedPagesContentSource alloc] init]];
         [mutableContentSources addObject:[[WMFContinueReadingContentSource alloc] initWithUserDataStore:self.dataStore]];
+        if (!WMFSelectedWikiIsWikipedia()) {
+            _contentSources = [mutableContentSources copy];
+            return _contentSources;
+        }
+
         [mutableContentSources addObject:[[WMFSuggestedEditsContentSource alloc] initWithDataStore:self.dataStore]];
         
         for (NSURL *siteURL in siteURLs) {
