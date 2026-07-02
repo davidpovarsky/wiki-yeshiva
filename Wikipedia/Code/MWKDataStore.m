@@ -59,6 +59,58 @@ NSString *const WMFCacheContextCrossProcessNotificiationChannelNamePrefix = @"or
 
 @end
 
+static NSString *WMFSelectedWikiIdentifier(void) {
+    NSString *identifier = [[NSUserDefaults standardUserDefaults] stringForKey:@"WMFSelectedWikiSourceIdentifier"];
+    return identifier.length > 0 ? identifier : @"wikipedia";
+}
+
+static NSURL *WMFMakeWikiSiteURL(NSString *host) {
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    components.scheme = @"https";
+    components.host = host;
+    return components.URL;
+}
+
+static NSString *WMFRootDomainForWikiIdentifier(NSString *identifier) {
+    if ([identifier isEqualToString:@"wiktionary"]) return @"wiktionary.org";
+    if ([identifier isEqualToString:@"wikisource"]) return @"wikisource.org";
+    if ([identifier isEqualToString:@"wikiquote"]) return @"wikiquote.org";
+    if ([identifier isEqualToString:@"wikibooks"]) return @"wikibooks.org";
+    if ([identifier isEqualToString:@"wikiversity"]) return @"wikiversity.org";
+    if ([identifier isEqualToString:@"wikinews"]) return @"wikinews.org";
+    if ([identifier isEqualToString:@"wikivoyage"]) return @"wikivoyage.org";
+    return nil;
+}
+
+static NSString *WMFLanguageCodeFromSiteURL(NSURL *siteURL) {
+    NSArray<NSString *> *parts = [siteURL.host.lowercaseString componentsSeparatedByString:@"."];
+    if (parts.count >= 3 && parts.firstObject.length > 0) {
+        return parts.firstObject;
+    }
+    return @"he";
+}
+
+static NSURL *WMFMappedWikiSiteURL(NSURL *baseSiteURL) {
+    NSString *identifier = WMFSelectedWikiIdentifier();
+
+    if ([identifier isEqualToString:@"wikipedia"]) {
+        return baseSiteURL ?: WMFMakeWikiSiteURL(@"he.wikipedia.org");
+    }
+
+    if ([identifier isEqualToString:@"wikiYeshiva"]) {
+        return WMFMakeWikiSiteURL(@"www.yeshiva.org.il");
+    }
+
+    NSString *rootDomain = WMFRootDomainForWikiIdentifier(identifier);
+    if (!rootDomain) {
+        return baseSiteURL ?: WMFMakeWikiSiteURL(@"he.wikipedia.org");
+    }
+
+    NSString *languageCode = WMFLanguageCodeFromSiteURL(baseSiteURL ?: WMFMakeWikiSiteURL(@"he.wikipedia.org"));
+    NSString *host = [NSString stringWithFormat:@"%@.%@", languageCode, rootDomain];
+    return WMFMakeWikiSiteURL(host);
+}
+
 @implementation MWKDataStore
 
 + (MWKDataStore *)shared {
@@ -720,7 +772,7 @@ NSString *const WMFCacheContextCrossProcessNotificiationChannelNamePrefix = @"or
 }
 
 - (nullable NSURL *)primarySiteURL {
-    return self.languageLinkController.appLanguage.siteURL;
+    return WMFMappedWikiSiteURL(self.languageLinkController.appLanguage.siteURL);
 }
 
 #pragma mark - History and Saved Page List

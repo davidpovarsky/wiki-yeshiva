@@ -89,7 +89,11 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
 
     var siteURL: URL? {
         get {
-            _siteURL ?? searchLanguageBarViewController?.selectedSiteURL ?? MWKDataStore.shared().primarySiteURL ?? NSURL.wmf_URLWithDefaultSiteAndCurrentLocale()
+            let baseSiteURL = _siteURL
+                ?? searchLanguageBarViewController?.selectedSiteURL
+                ?? NSURL.wmf_URLWithDefaultSiteAndCurrentLocale()
+
+            return WikiSourceSelection.siteURL(for: baseSiteURL)
         }
         set { _siteURL = newValue }
     }
@@ -118,6 +122,8 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        NotificationCenter.default.addObserver(self, selector: #selector(wikiSourceSelectionDidChange(_:)), name: NSNotification.Name("WMFWikiSourceSelectionDidChangeNotification"), object: nil)
+
         view.addSubview(contentContainerView)
         contentContainerView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -144,6 +150,17 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
         let languagesBarHeight = searchLanguageBarViewController?.view.bounds.height ?? 0
         recentSearchesViewModel.topPadding = languagesBarHeight
         resultsViewController.collectionView.contentInset.top = languagesBarHeight
+    }
+
+    @objc private func wikiSourceSelectionDidChange(_ notification: Notification) {
+        searchTask?.cancel()
+        searchTask = nil
+        lastSearchSiteURL = nil
+        resetSearchResults()
+
+        guard let searchTerm, searchTerm.wmf_hasNonWhitespaceText else { return }
+        showSearchResults(animated: false)
+        search(for: searchTerm, suggested: false)
     }
 
     // MARK: - Embedded content container
@@ -303,7 +320,8 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
         let failure = { (error: Error, type: WMFSearchType) in
             DispatchQueue.main.async { [weak self] in
                 guard let self,
-                      searchTerm == self.searchTerm else { return }
+                      searchTerm == self.searchTerm,
+                      siteURL == self.siteURL else { return }
                 self.resultsViewController.emptyViewType = (error as NSError).wmf_isNetworkConnectionError() ? .noInternetConnection : (error as NSError).wmf_isCancelledError() ? .none : .noSearchResults
                 self.resultsViewController.results = []
                 SearchFunnel.shared.logShowSearchError(with: type, elapsedTime: Date().timeIntervalSince(start), source: self.source.stringValue)
@@ -312,7 +330,9 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
 
         let success = { (results: WMFSearchResults, type: WMFSearchType) in
             DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
+                guard let self,
+                      searchTerm == self.searchTerm,
+                      siteURL == self.siteURL else { return }
                 NSUserActivity.wmf_makeActive(NSUserActivity.wmf_searchResultsActivitySearchSiteURL(siteURL, searchTerm: searchTerm))
                 let resultsArray = results.results ?? []
                 self.resultsViewController.emptyViewType = resultsArray.isEmpty ? .noSearchResults : .none
