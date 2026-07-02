@@ -171,6 +171,8 @@ public class Configuration: NSObject {
         public static let wikinews = "wikinews.org"
         public static let wikiversity = "wikiversity.org"
         public static let wikivoyage = "wikivoyage.org"
+        public static let yeshiva = "yeshiva.org.il"
+        public static let wwwYeshiva = "www.yeshiva.org.il"
     }
     
     struct Path {
@@ -192,6 +194,9 @@ public class Configuration: NSObject {
     
     // Wikipedia Domains
     public let wikipediaDomains: [String]
+
+    // Wiki hosts that can be routed to native article handling
+    public let nativeWikiDomains: [String]
     
     // Domains that can fall back to in-app web view
     public let inAppWebViewRoutingDomains: [String]
@@ -219,7 +224,18 @@ public class Configuration: NSObject {
         self.centralAuthCookieTargetDomains = centralAuthCookieTargetDomains
         
         self.wikipediaDomains = [Domain.wikipedia, Domain.wikipediaBetaLabs, Domain.appsLabs]
-        self.inAppWebViewRoutingDomains = wikipediaDomains + [Domain.mediaWiki, Domain.wikidata, Domain.wikimedia, Domain.wikimediafoundation]
+        self.nativeWikiDomains = wikipediaDomains + [
+            Domain.wiktionary,
+            Domain.wikisource,
+            Domain.wikiquote,
+            Domain.wikibooks,
+            Domain.wikiversity,
+            Domain.wikinews,
+            Domain.wikivoyage,
+            Domain.yeshiva,
+            Domain.wwwYeshiva
+        ]
+        self.inAppWebViewRoutingDomains = nativeWikiDomains + [Domain.mediaWiki, Domain.wikidata, Domain.wikimedia, Domain.wikimediafoundation]
         self.pageContentServiceAPIType = pageContentServiceAPIType
         self.feedContentAPIType = feedContentAPIType
         self.announcementsAPIType = announcementsAPIType
@@ -374,6 +390,19 @@ public class Configuration: NSObject {
             }
         }
         
+        return false
+    }
+
+    public func isNativeWikiHost(_ host: String?) -> Bool {
+        guard let host = host else {
+            return false
+        }
+        for domain in nativeWikiDomains {
+            if host.isDomainOrSubDomainOf(domain) {
+                return true
+            }
+        }
+
         return false
     }
     

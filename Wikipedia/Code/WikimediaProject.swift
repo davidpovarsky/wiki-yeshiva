@@ -178,7 +178,7 @@ public enum WikimediaProject: Hashable {
     
     public var mainNamespaceGoesToNativeArticleView: Bool {
         switch self {
-        case .wikipedia:
+        case .wikipedia, .wikiquote, .wikibooks, .wiktionary, .wikisource, .wikinews, .wikiversity, .wikivoyage:
             return true
         default:
             return false
@@ -196,7 +196,7 @@ public enum WikimediaProject: Hashable {
     
     public var considersWResourcePathsForRouting: Bool {
         switch self {
-        case .wikipedia:
+        case .wikipedia, .wikiquote, .wikibooks, .wiktionary, .wikisource, .wikinews, .wikiversity, .wikivoyage:
             return true
         default:
             return false
