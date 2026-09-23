@@ -94,7 +94,10 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
 
     var siteURL: URL? {
         get {
-            _siteURL ?? searchLanguageBarViewController?.selectedSiteURL ?? MWKDataStore.shared().primarySiteURL ?? NSURL.wmf_URLWithDefaultSiteAndCurrentLocale()
+            if !WikiSourceManager.shared.isCurrentSourceWikipedia {
+                return WikiSourceManager.shared.currentSiteURL
+            }
+            return _siteURL ?? searchLanguageBarViewController?.selectedSiteURL ?? MWKDataStore.shared().primarySiteURL ?? NSURL.wmf_URLWithDefaultSiteAndCurrentLocale()
         }
         set { _siteURL = newValue }
     }
@@ -137,6 +140,7 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
         showRecentSearches(animated: false)
         NotificationCenter.default.addObserver(self, selector: #selector(articleWasUpdated(_:)), name: .WMFArticleUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide(_:)), name: UIResponder.keyboardDidHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(wikiSourceDidChange(_:)), name: WikiSourceManager.didChangeSourceNotification, object: nil)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -244,7 +248,7 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
     }
 
     private func updateLanguageBarVisibility() {
-        let shouldShow = showLanguageBar && WMFSettingsDataController.shared.showSearchLanguageBar()
+        let shouldShow = showLanguageBar && WMFSettingsDataController.shared.showSearchLanguageBar() && WikiSourceManager.shared.isCurrentSourceWikipedia
 
         if shouldShow && searchLanguageBarViewController == nil {
             let vc = setupLanguageBarViewController()
@@ -279,6 +283,15 @@ class SearchResultsViewController: ThemeableViewController, WMFNavigationBarConf
         view.setNeedsLayout()
         
         MoreLanguagesTip.searchLanguagesBarIsVisible = shouldShow
+    }
+
+    @objc private func wikiSourceDidChange(_ notification: Notification) {
+        updateLanguageBarVisibility()
+        if let searchTerm = searchTerm, searchTerm.wmf_hasNonWhitespaceText {
+            search()
+        } else {
+            reloadRecentSearches()
+        }
     }
 
     override func viewSafeAreaInsetsDidChange() {

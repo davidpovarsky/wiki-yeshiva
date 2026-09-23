@@ -730,6 +730,9 @@ NSString *const WMFCacheContextCrossProcessNotificiationChannelNamePrefix = @"or
 }
 
 - (nullable NSURL *)primarySiteURL {
+    if (![WMFWikiSourceManager shared].isCurrentSourceWikipedia) {
+        return [WMFWikiSourceManager shared].currentSiteURL;
+    }
     return self.languageLinkController.appLanguage.siteURL;
 }
 

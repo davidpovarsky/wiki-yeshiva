@@ -77,6 +77,15 @@ NSString *const WMFNewExploreFeedPreferencesWereRejectedNotification = @"WMFNewE
     _dataStore = dataStore;
     self.exploreFeedPreferencesUpdateCoordinator = [[ExploreFeedPreferencesUpdateCoordinator alloc] initWithFeedContentController:self];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateExploreFeedPreferencesFromDidSaveNotification:) name:WMFViewContextDidSave object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wikiSourceDidChange:) name:WMFWikiSourceManager.didChangeSourceNotification object:nil];
+}
+
+- (void)wikiSourceDidChange:(NSNotification *)note {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.contentSources = nil;
+        [self updateContentSources];
+        [self startContentSources];
+    });
 }
 
 - (NSDictionary *)exploreFeedPreferences {
@@ -93,6 +102,10 @@ NSString *const WMFNewExploreFeedPreferencesWereRejectedNotification = @"WMFNewE
 }
 
 - (NSArray<NSURL *> *)preferredSiteURLs {
+    if (![WMFWikiSourceManager shared].isCurrentSourceWikipedia) {
+        NSURL *sourceURL = [WMFWikiSourceManager shared].currentSiteURL;
+        return sourceURL ? @[sourceURL] : @[];
+    }
     return [self.dataStore.languageLinkController.preferredSiteURLs copy];
 }
 
@@ -140,17 +153,23 @@ NSString *const WMFNewExploreFeedPreferencesWereRejectedNotification = @"WMFNewE
         NSMutableArray *mutableContentSources = [NSMutableArray arrayWithCapacity:2 + siteURLs.count * 7];
         [mutableContentSources addObject:[[WMFRelatedPagesContentSource alloc] init]];
         [mutableContentSources addObject:[[WMFContinueReadingContentSource alloc] initWithUserDataStore:self.dataStore]];
-        [mutableContentSources addObject:[[WMFSuggestedEditsContentSource alloc] initWithDataStore:self.dataStore]];
-        
-        for (NSURL *siteURL in siteURLs) {
-            [mutableContentSources addObject:[[WMFDailyGameContentSource alloc] initWithDataStore:self.dataStore siteURL:siteURL]];
-            WMFFeedContentSource *feedContentSource = [[WMFFeedContentSource alloc] initWithSiteURL:siteURL
-                                                                                      userDataStore:self.dataStore];
-            [mutableContentSources addObjectsFromArray: @[[[WMFNearbyContentSource alloc] initWithSiteURL:siteURL  dataStore:self.dataStore],
-                                feedContentSource,
-                                [[WMFRandomContentSource alloc] initWithSiteURL:siteURL session:session configuration:configuration],
-                                [[WMFAnnouncementsContentSource alloc] initWithSiteURL:siteURL userDataStore:self.dataStore],
-                                [[WMFOnThisDayContentSource alloc] initWithSiteURL:siteURL session:session configuration:configuration]]];
+
+        if ([WMFWikiSourceManager shared].isCurrentSourceWikipedia) {
+            [mutableContentSources addObject:[[WMFSuggestedEditsContentSource alloc] initWithDataStore:self.dataStore]];
+            for (NSURL *siteURL in siteURLs) {
+                [mutableContentSources addObject:[[WMFDailyGameContentSource alloc] initWithDataStore:self.dataStore siteURL:siteURL]];
+                WMFFeedContentSource *feedContentSource = [[WMFFeedContentSource alloc] initWithSiteURL:siteURL
+                                                                                          userDataStore:self.dataStore];
+                [mutableContentSources addObjectsFromArray: @[[[WMFNearbyContentSource alloc] initWithSiteURL:siteURL  dataStore:self.dataStore],
+                                    feedContentSource,
+                                    [[WMFRandomContentSource alloc] initWithSiteURL:siteURL session:session configuration:configuration],
+                                    [[WMFAnnouncementsContentSource alloc] initWithSiteURL:siteURL userDataStore:self.dataStore],
+                                    [[WMFOnThisDayContentSource alloc] initWithSiteURL:siteURL session:session configuration:configuration]]];
+            }
+        } else {
+            for (NSURL *siteURL in siteURLs) {
+                [mutableContentSources addObject:[[WMFRandomContentSource alloc] initWithSiteURL:siteURL session:session configuration:configuration]];
+            }
         }
         _contentSources = [mutableContentSources copy];
     }
