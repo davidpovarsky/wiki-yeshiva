@@ -12,10 +12,24 @@ public struct WMFProjectIconView: View {
 
     public var body: some View {
         switch project {
-        case .wikipedia(let wmfLanguage):
+        case .wikipedia(let wmfLanguage), .wiktionary(let wmfLanguage), .wikisource(let wmfLanguage):
             let capitalizedText = wmfLanguage.languageCode.localizedUppercase
             HStack {
                 Text(capitalizedText)
+                    .background(Color(appEnvironment.theme.paperBackground))
+                    .font(Font(WMFFont.for(.caption1)))
+                    .foregroundColor(Color(appEnvironment.theme.secondaryText))
+                    .padding([.leading, .trailing], 3)
+                    .padding([.top, .bottom], 4)
+
+            }
+            .overlay(RoundedRectangle(cornerRadius: 4)
+                .stroke(Color(appEnvironment.theme.secondaryText), lineWidth: 1)
+            )
+
+        case .wikiYeshiva:
+            HStack {
+                Text("WY")
                     .background(Color(appEnvironment.theme.paperBackground))
                     .font(Font(WMFFont.for(.caption1)))
                     .foregroundColor(Color(appEnvironment.theme.secondaryText))
