@@ -766,6 +766,10 @@
 		67BF4ED42F4952FE007389AF /* SearchResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BF4ECA2F4952FE007389AF /* SearchResultsViewController.swift */; };
 		5EA5C0DE00000000000000A3 /* SearchResultsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000A0 /* SearchResultsLoader.swift */; };
 		5EA5C0DE00000000000000C3 /* SearchResultsMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000C0 /* SearchResultsMapper.swift */; };
+		5EA5C0DE00000000000000E1 /* WikiArticleContentAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000E0 /* WikiArticleContentAdapter.swift */; };
+		5EA5C0DE00000000000000E2 /* WikiArticleContentAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000E0 /* WikiArticleContentAdapter.swift */; };
+		5EA5C0DE00000000000000E3 /* WikiArticleContentAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000E0 /* WikiArticleContentAdapter.swift */; };
+		5EA5C0DE00000000000000F1 /* WikiSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA5C0DE00000000000000F0 /* WikiSource.swift */; };
 		67C169A22BEC0B9900F09043 /* wikipedia-magicwords in Resources */ = {isa = PBXBuildFile; fileRef = 67C169A12BEC0B9900F09043 /* wikipedia-magicwords */; };
 		67C1757628AD4D6000C5ABA4 /* TalkPageDataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C1757528AD4D6000C5ABA4 /* TalkPageDataController.swift */; };
 		67C1757728AD4D6000C5ABA4 /* TalkPageDataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C1757528AD4D6000C5ABA4 /* TalkPageDataController.swift */; };
@@ -3344,6 +3348,8 @@
 		67BF4ECA2F4952FE007389AF /* SearchResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsViewController.swift; sourceTree = "<group>"; };
 		5EA5C0DE00000000000000A0 /* SearchResultsLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsLoader.swift; sourceTree = "<group>"; };
 		5EA5C0DE00000000000000C0 /* SearchResultsMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultsMapper.swift; sourceTree = "<group>"; };
+		5EA5C0DE00000000000000E0 /* WikiArticleContentAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikiArticleContentAdapter.swift; sourceTree = "<group>"; };
+		5EA5C0DE00000000000000F0 /* WikiSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WikiSource.swift; path = "WMF Framework/WikiSource.swift"; sourceTree = SOURCE_ROOT; usesTabs = 0; };
 		67BF4ECB2F4952FE007389AF /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
 		67C169A12BEC0B9900F09043 /* wikipedia-magicwords */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "wikipedia-magicwords"; path = "Wikipedia/Code/wikipedia-magicwords"; sourceTree = SOURCE_ROOT; };
 		67C1757528AD4D6000C5ABA4 /* TalkPageDataController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkPageDataController.swift; sourceTree = "<group>"; };
@@ -5965,6 +5971,7 @@
 				A5A1C2012EDE900100000001 /* PageContentService+UITestAccessibilityConfiguration.swift */,
 				59A66E119365436E9C5F853D /* PageContentService+UITestAccessibilityScript.swift */,
 				67DC5BE223A017CA00B03A84 /* ArticleViewController.swift */,
+				5EA5C0DE00000000000000E0 /* WikiArticleContentAdapter.swift */,
 				D8A47C8E23D7338C002AA823 /* ArticleViewController+TableOfContents.swift */,
 				83B01F7123DA5327001185F4 /* ArticleViewController+ArticleWebMessageHandling.swift */,
 				83B01F7623DA5348001185F4 /* ArticleViewController+ArticleToolbarHandling.swift */,
@@ -7902,6 +7909,7 @@
 				D82CA3322020E8D8005C2D5C /* ReadingListsSyncOperation.swift */,
 				83F1095623D07E3B003F3E9E /* APIURLComponentsBuilder.swift */,
 				D8543230218879D000E895B5 /* Configuration.swift */,
+				5EA5C0DE00000000000000F0 /* WikiSource.swift */,
 				8321FCC923871D8F0079F3C7 /* Router.swift */,
 				D8181FA42188DC1400FDEC59 /* String+Domains.swift */,
 				8386BDF02386D3E1007EE89D /* RequestError.swift */,
@@ -9563,6 +9571,7 @@
 				67BF4ED42F4952FE007389AF /* SearchResultsViewController.swift in Sources */,
 				5EA5C0DE00000000000000A3 /* SearchResultsLoader.swift in Sources */,
 				5EA5C0DE00000000000000C3 /* SearchResultsMapper.swift in Sources */,
+				5EA5C0DE00000000000000E3 /* WikiArticleContentAdapter.swift in Sources */,
 				53A575FA2602C845009835E6 /* WMFAppViewController+Extensions.swift in Sources */,
 				37C5C1FC2DC28D390082852E /* TabsOverviewCoordinator.swift in Sources */,
 				B0C7A0801F710E94008415E7 /* WMFWelcomeLanguagesAnimationBackgroundView.swift in Sources */,
@@ -10124,6 +10133,7 @@
 				0042807A25E6E395004945B3 /* MTLJSONAdapter.m in Sources */,
 				D80A792A1F31E63C00EC06AB /* NSCharacterSet+WMFLinkParsing.m in Sources */,
 				D8543231218879D000E895B5 /* Configuration.swift in Sources */,
+				5EA5C0DE00000000000000F1 /* WikiSource.swift in Sources */,
 				D8FA18AC1E1BD874009675C3 /* EXTScope.m in Sources */,
 				67D6C01C2405A4FB005709B1 /* CacheItem+CoreDataClass.swift in Sources */,
 				7A630F71217A400200FC93FC /* Array+Chunked.swift in Sources */,
@@ -10929,6 +10939,7 @@
 				67BF4ED12F4952FE007389AF /* SearchResultsViewController.swift in Sources */,
 				5EA5C0DE00000000000000A2 /* SearchResultsLoader.swift in Sources */,
 				5EA5C0DE00000000000000C2 /* SearchResultsMapper.swift in Sources */,
+				5EA5C0DE00000000000000E2 /* WikiArticleContentAdapter.swift in Sources */,
 				67DAEDA423CE24DA003AA208 /* SavedArticlesFetcher.swift in Sources */,
 				7AB7DEC9227203A600DD61A2 /* InsertMediaViewController.swift in Sources */,
 				B0CD9DDD1F70997400051843 /* WMFWelcomeAnimationView.swift in Sources */,
@@ -11484,6 +11495,7 @@
 				67BF4ECE2F4952FE007389AF /* SearchResultsViewController.swift in Sources */,
 				5EA5C0DE00000000000000A1 /* SearchResultsLoader.swift in Sources */,
 				5EA5C0DE00000000000000C1 /* SearchResultsMapper.swift in Sources */,
+				5EA5C0DE00000000000000E1 /* WikiArticleContentAdapter.swift in Sources */,
 				00E75B6827EB927B00A45B78 /* NotificationsCenterDetailActionCell.swift in Sources */,
 				67DAEDA523CE24DA003AA208 /* SavedArticlesFetcher.swift in Sources */,
 				7AB7DECA227203A600DD61A2 /* InsertMediaViewController.swift in Sources */,
