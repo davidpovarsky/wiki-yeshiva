@@ -21,7 +21,7 @@ extension String {
         return (namespace, title)
     }
     
-    static let wikiResourceRegex = try! NSRegularExpression(pattern: "^/wiki/(.+)$", options: .caseInsensitive)
+    static let wikiResourceRegex = try! NSRegularExpression(pattern: "^/wiki/(?:index\\.php/)?(.+)$", options: .caseInsensitive)
     var wikiResourcePath: String? {
         return String.wikiResourceRegex.firstReplacementString(in: self)
     }

@@ -6,7 +6,11 @@ NSString *const WMFApplicationGroupIdentifier = @QUOTE(WMF_APP_GROUP_IDENTIFIER)
 @implementation NSFileManager (WMFGroup)
 
 - (nonnull NSURL *)wmf_containerURL {
-    return [self containerURLForSecurityApplicationGroupIdentifier:WMFApplicationGroupIdentifier];
+    NSURL *url = [self containerURLForSecurityApplicationGroupIdentifier:WMFApplicationGroupIdentifier];
+    if (!url) {
+        url = [[self URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask] firstObject];
+    }
+    return url;
 }
 
 - (nonnull NSString *)wmf_containerPath {

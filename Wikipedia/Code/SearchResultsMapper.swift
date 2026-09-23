@@ -24,6 +24,9 @@ struct SearchResultsMapper {
     }
 
     static func project(for url: URL) -> WMFProject? {
+        if let project = WikimediaProject(siteURL: url)?.wmfProject {
+            return project
+        }
         guard let languageCode = url.wmf_languageCode else { return nil }
         return .wikipedia(WMFLanguage(languageCode: languageCode, languageVariantCode: url.wmf_languageVariantCode))
     }

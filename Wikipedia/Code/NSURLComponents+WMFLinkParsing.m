@@ -38,6 +38,9 @@
 
 + (NSString *)wmf_hostWithDomain:(NSString *)domain
                        subDomain:(NSString *)subDomain {
+    if ([domain isEqualToString:@"yeshiva.org.il"] || [domain isEqualToString:@"www.yeshiva.org.il"]) {
+        return @"www.yeshiva.org.il";
+    }
     NSMutableArray *hostComponents = [NSMutableArray array];
     if (subDomain) {
         [hostComponents addObject:subDomain];
@@ -51,7 +54,8 @@
 - (void)setWmf_titleWithUnderscores:(NSString *_Nullable)titleWithUnderscores {
     NSString *path = [titleWithUnderscores stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet wmf_encodeURIComponentAllowedCharacterSet]];
     if (path != nil && path.length > 0) {
-        NSArray *pathComponents = @[@"/wiki/", path];
+        BOOL isYeshiva = [self.host isEqualToString:@"yeshiva.org.il"] || [self.host isEqualToString:@"www.yeshiva.org.il"];
+        NSArray *pathComponents = isYeshiva ? @[@"/wiki/index.php", path] : @[@"/wiki", path];
         self.percentEncodedPath = [NSString pathWithComponents:pathComponents];
     } else {
         self.percentEncodedPath = nil;

@@ -17,6 +17,7 @@ public enum WikimediaProject: Hashable {
     case wikispecies
     case commons
     case wikidata
+    case wikiYeshiva
     
     public var projectIconName: String? {
         switch self {
@@ -44,6 +45,8 @@ public enum WikimediaProject: Hashable {
             return "wikimedia-project-mediawiki"
         case .wikispecies:
             return "wikimedia-project-wikispecies"
+        case .wikiYeshiva:
+            return nil
         }
     }
     
@@ -73,6 +76,8 @@ public enum WikimediaProject: Hashable {
             return nil
         case .wikispecies:
             return nil
+        case .wikiYeshiva:
+            return "he"
         }
     }
     
@@ -84,6 +89,12 @@ public enum WikimediaProject: Hashable {
             return WMFProject.wikidata
         case .wikipedia(let languageCode, _, let languageVariantCode):
             return WMFProject.wikipedia(WMFLanguage(languageCode: languageCode, languageVariantCode: languageVariantCode))
+        case .wiktionary(let languageCode, _):
+            return WMFProject.wiktionary(WMFLanguage(languageCode: languageCode, languageVariantCode: nil))
+        case .wikisource(let languageCode, _):
+            return WMFProject.wikisource(WMFLanguage(languageCode: languageCode, languageVariantCode: nil))
+        case .wikiYeshiva:
+            return WMFProject.wikiYeshiva
         default:
             return nil
         }
@@ -93,6 +104,11 @@ public enum WikimediaProject: Hashable {
         
         let canonicalSiteURL = siteURL.canonical
         let siteURLString = canonicalSiteURL.absoluteString
+
+        if siteURLString.contains("yeshiva.org.il") {
+            self = .wikiYeshiva
+            return
+        }
         
         // Assign non-language specific project
         if siteURLString.contains(Configuration.Domain.mediaWiki) {
@@ -152,6 +168,12 @@ public enum WikimediaProject: Hashable {
             self = .commons
         case .mediawiki:
             self = .mediawiki
+        case .wiktionary(let wmfLanguage):
+            self = .wiktionary(wmfLanguage.languageCode, "")
+        case .wikisource(let wmfLanguage):
+            self = .wikisource(wmfLanguage.languageCode, "")
+        case .wikiYeshiva:
+            self = .wikiYeshiva
         }
     }
 
@@ -178,7 +200,7 @@ public enum WikimediaProject: Hashable {
     
     public var mainNamespaceGoesToNativeArticleView: Bool {
         switch self {
-        case .wikipedia:
+        case .wikipedia, .wiktionary, .wikisource, .wikiYeshiva, .wikiquote, .wikibooks, .wikinews, .wikiversity, .wikivoyage:
             return true
         default:
             return false
@@ -196,7 +218,7 @@ public enum WikimediaProject: Hashable {
     
     public var considersWResourcePathsForRouting: Bool {
         switch self {
-        case .wikipedia:
+        case .wikipedia, .wiktionary, .wikisource, .wikiYeshiva, .wikiquote, .wikibooks, .wikinews, .wikiversity, .wikivoyage:
             return true
         default:
             return false

@@ -172,6 +172,8 @@ public class Configuration: NSObject {
         public static let wikinews = "wikinews.org"
         public static let wikiversity = "wikiversity.org"
         public static let wikivoyage = "wikivoyage.org"
+        public static let yeshiva = "yeshiva.org.il"
+        public static let wwwYeshiva = "www.yeshiva.org.il"
     }
     
     struct Path {
@@ -220,12 +222,32 @@ public class Configuration: NSObject {
         self.centralAuthCookieTargetDomains = centralAuthCookieTargetDomains
         
         self.wikipediaDomains = [Domain.wikipedia, Domain.wikipediaBetaLabs, Domain.appsLabs]
-        self.inAppWebViewRoutingDomains = wikipediaDomains + [Domain.mediaWiki, Domain.wikidata, Domain.wikimedia, Domain.wikimediafoundation]
+        let multiWikiDomains = [
+            Domain.wiktionary,
+            Domain.wikisource,
+            Domain.wikiquote,
+            Domain.wikibooks,
+            Domain.wikiversity,
+            Domain.wikinews,
+            Domain.wikivoyage,
+            Domain.yeshiva,
+            Domain.wwwYeshiva
+        ]
+        self.inAppWebViewRoutingDomains = wikipediaDomains + multiWikiDomains + [Domain.mediaWiki, Domain.wikidata, Domain.wikimedia, Domain.wikimediafoundation]
         self.pageContentServiceAPIType = pageContentServiceAPIType
         self.feedContentAPIType = feedContentAPIType
         self.announcementsAPIType = announcementsAPIType
         self.wikidataAPIType = wikidataAPIType
         self.commonsAPIType = commonsAPIType
+    }
+
+    @objc public func isNativeWikiHost(_ host: String?) -> Bool {
+        guard let host = host?.lowercased() else { return false }
+        if host == Domain.yeshiva || host == Domain.wwwYeshiva || host.hasSuffix("." + Domain.yeshiva) {
+            return true
+        }
+        let domains = [Domain.wikipedia, Domain.wiktionary, Domain.wikisource, Domain.wikiquote, Domain.wikibooks, Domain.wikiversity, Domain.wikinews, Domain.wikivoyage]
+        return domains.contains { host == $0 || host.hasSuffix("." + $0) }
     }
     
     // MARK: Page Content Service
@@ -305,6 +327,16 @@ public class Configuration: NSObject {
     }
     
     public func mediaWikiAPIURLForHost(_ host: String? = nil, with queryParameters: [String: Any]? = nil) -> URLComponents {
+        if let host = host, host.contains("yeshiva.org.il") {
+            var components = URLComponents()
+            components.host = host
+            components.scheme = Scheme.https
+            let builder = APIURLComponentsBuilder(hostComponents: components, basePathComponents: ["wiki", "api.php"])
+            guard let queryParameters = queryParameters else {
+                return builder.components()
+            }
+            return builder.components(queryParameters: queryParameters)
+        }
         let builder = mediaWikiAPIType.builder(withWikiHost: host)
         guard let queryParameters = queryParameters else {
             return builder.components()
@@ -339,7 +371,8 @@ public class Configuration: NSObject {
         var components = URLComponents()
         components.host = host
         components.scheme = Scheme.https
-        return APIURLComponentsBuilder(hostComponents: components, basePathComponents: Path.wikiResourceComponent)
+        let basePath = host.contains("yeshiva.org.il") ? ["wiki", "index.php"] : Path.wikiResourceComponent
+        return APIURLComponentsBuilder(hostComponents: components, basePathComponents: basePath)
     }
     
     func expandedArticleURLComponentsBuilder(for host: String) -> APIURLComponentsBuilder {

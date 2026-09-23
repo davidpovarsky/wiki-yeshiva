@@ -124,11 +124,14 @@ NSString *const WMFEditPencil = @"WMFEditPencil";
 }
 
 - (NSURL *)wmf_APIURL {
+    if ([self.host isEqualToString:@"www.yeshiva.org.il"] || [self.host isEqualToString:@"yeshiva.org.il"]) {
+        return [[self wmf_siteURL] wmf_URLWithPath:@"/wiki/api.php"];
+    }
     return [[self wmf_siteURL] wmf_URLWithPath:WMFAPIPath];
 }
 
 + (NSURL *)wmf_APIURLForURL:(NSURL *)URL {
-    return [[URL wmf_siteURL] wmf_URLWithPath:WMFAPIPath];
+    return [URL wmf_APIURL];
 }
 
 + (NSURL *)wmf_desktopAPIURLForURL:(NSURL *)URL {
@@ -176,6 +179,9 @@ NSString *const WMFEditPencil = @"WMFEditPencil";
 }
 
 - (NSString *)wmf_domain {
+    if ([self.host isEqualToString:@"www.yeshiva.org.il"] || [self.host isEqualToString:@"yeshiva.org.il"]) {
+        return @"yeshiva.org.il";
+    }
     NSArray *hostComponents = [self.host componentsSeparatedByString:@"."];
     if (hostComponents.count < 3) {
         return self.host;
@@ -187,6 +193,9 @@ NSString *const WMFEditPencil = @"WMFEditPencil";
 }
 
 - (NSString *)wmf_languageCode {
+    if ([self.host isEqualToString:@"www.yeshiva.org.il"] || [self.host isEqualToString:@"yeshiva.org.il"]) {
+        return @"he";
+    }
     NSArray *hostComponents = [self.host componentsSeparatedByString:@"."];
     if (hostComponents.count < 3) {
         return nil;
