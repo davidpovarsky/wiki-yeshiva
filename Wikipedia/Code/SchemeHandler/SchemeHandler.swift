@@ -158,6 +158,14 @@ private extension SchemeHandler {
              return
          }
         
+        if let requestURL = request.url,
+           let adapter = WikiArticleContentAdapterRegistry.adapter(forMobileHTMLRequest: requestURL),
+           let adaptedRequest = adapter.upstreamRequest(forMobileHTMLRequest: requestURL),
+           let articleTitle = adapter.title(fromMobileHTMLRequest: requestURL) {
+            kickOffAdaptedArticleDataTask(upstreamRequest: adaptedRequest, targetURL: requestURL, articleTitle: articleTitle, adapter: adapter, urlSchemeTask: urlSchemeTask)
+            return
+        }
+
         // IMPORTANT: Ensure the urlSchemeTask is not strongly captured by the callback blocks.
         // Otherwise it will sometimes be deallocated on a non-main thread, causing a crash https://phabricator.wikimedia.org/T224113
         
@@ -287,5 +295,48 @@ private extension SchemeHandler {
     func addSessionTask(request: URLRequest, dataTask: URLSessionTask) {
         assert(Thread.isMainThread)
         activeSessionTasks[request] = dataTask
+    }
+
+    func kickOffAdaptedArticleDataTask(upstreamRequest: URLRequest, targetURL: URL, articleTitle: String, adapter: WikiArticleContentAdapter, urlSchemeTask: WKURLSchemeTask) {
+        guard schemeTaskIsActive(urlSchemeTask: urlSchemeTask) else { return }
+
+        SessionsFunnel.shared.setPageLoadStartTime()
+
+        let task = URLSession.shared.dataTask(with: upstreamRequest) { [weak self, weak urlSchemeTask] data, response, error in
+            DispatchQueue.main.async {
+                guard let self = self, let urlSchemeTask = urlSchemeTask else { return }
+                guard self.schemeTaskIsActive(urlSchemeTask: urlSchemeTask) else { return }
+                defer {
+                    self.removeSessionTask(request: urlSchemeTask.request)
+                    self.removeSchemeTask(urlSchemeTask: urlSchemeTask)
+                }
+
+                if let error = error {
+                    SessionsFunnel.shared.clearPageLoadStartTime()
+                    urlSchemeTask.didFailWithError(error)
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse,
+                      HTTPStatusCode.isSuccessful(httpResponse.statusCode),
+                      let data = data,
+                      let adaptedHTML = adapter.adaptedMobileHTMLDocument(from: data, urlResponse: httpResponse, title: articleTitle),
+                      let adaptedData = adaptedHTML.data(using: .utf8),
+                      let adaptedResponse = HTTPURLResponse(url: targetURL, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache"]) else {
+                    SessionsFunnel.shared.clearPageLoadStartTime()
+                    urlSchemeTask.didFailWithError(SchemeHandlerError.unexpectedResponse)
+                    return
+                }
+
+                urlSchemeTask.didReceive(adaptedResponse)
+                urlSchemeTask.didReceive(adaptedData)
+                self.didReceiveDataCallback?(urlSchemeTask, adaptedData)
+                urlSchemeTask.didFinish()
+                SessionsFunnel.shared.endPageLoadStartTime()
+            }
+        }
+
+        addSessionTask(request: urlSchemeTask.request, dataTask: task)
+        task.resume()
     }
 }
