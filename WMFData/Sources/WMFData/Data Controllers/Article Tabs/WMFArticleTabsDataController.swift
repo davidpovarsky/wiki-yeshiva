@@ -886,11 +886,7 @@ private extension WMFProject {
         switch self {
         case .wikipedia(let language):
             return language.languageCode.lowercased() == "en" || language.languageCode.lowercased() == "ar" || language.languageCode.lowercased() == "de"
-        case .wikidata:
-            return false
-        case .commons:
-            return false
-        case .mediawiki:
+        default:
             return false
         }
     }

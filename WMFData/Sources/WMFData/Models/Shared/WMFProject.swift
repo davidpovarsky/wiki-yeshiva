@@ -6,6 +6,9 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
     case wikidata
     case commons
     case mediawiki
+    case wiktionary(WMFLanguage)
+    case wikisource(WMFLanguage)
+    case wikiYeshiva
     
     public var id: String {
         switch self {
@@ -15,6 +18,20 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
             return "wikidata"
         case .mediawiki:
             return "mediawiki"
+        case .wikiYeshiva:
+            return "wikiYeshiva"
+        case .wiktionary(let language):
+            var identifier = "wiktionary~\(language.languageCode)"
+            if let variantCode = language.languageVariantCode {
+                identifier.append("~\(variantCode)")
+            }
+            return identifier
+        case .wikisource(let language):
+            var identifier = "wikisource~\(language.languageCode)"
+            if let variantCode = language.languageVariantCode {
+                identifier.append("~\(variantCode)")
+            }
+            return identifier
         case .wikipedia(let language):
             var identifier = "wikipedia~\(language.languageCode)"
             if let variantCode = language.languageVariantCode {
@@ -34,6 +51,16 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
             hasher.combine("wikipedia")
             hasher.combine(language.languageCode)
             hasher.combine(language.languageVariantCode)
+        case .wiktionary(let language):
+            hasher.combine("wiktionary")
+            hasher.combine(language.languageCode)
+            hasher.combine(language.languageVariantCode)
+        case .wikisource(let language):
+            hasher.combine("wikisource")
+            hasher.combine(language.languageCode)
+            hasher.combine(language.languageVariantCode)
+        case .wikiYeshiva:
+            hasher.combine("wikiYeshiva")
         case .wikidata:
             hasher.combine("wikidata")
         case .commons:
@@ -49,23 +76,38 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
             self = .commons
         case "wikidata":
             self = .wikidata
+        case "mediawiki":
+            self = .mediawiki
+        case "wikiYeshiva":
+            self = .wikiYeshiva
         default:
-            // Expected format: wikipedia~languageCode or wikipedia~languageCode~variant
+            // Expected format: prefix~languageCode or prefix~languageCode~variant
             let components = id.components(separatedBy: "~")
-            guard components.count >= 2, components[0] == "wikipedia" else {
+            guard components.count >= 2 else {
                 return nil
             }
             
+            let prefix = components[0]
             let languageCode = components[1]
             let variantCode = components.count > 2 ? components[2] : nil
             let language = WMFLanguage(languageCode: languageCode, languageVariantCode: variantCode)
-            self = .wikipedia(language)
+            
+            switch prefix {
+            case "wikipedia":
+                self = .wikipedia(language)
+            case "wiktionary":
+                self = .wiktionary(language)
+            case "wikisource":
+                self = .wikisource(language)
+            default:
+                return nil
+            }
         }
     }
     
     public var languageVariantCode: String? {
         switch self {
-        case .wikipedia(let language):
+        case .wikipedia(let language), .wiktionary(let language), .wikisource(let language):
             return language.languageVariantCode
         default:
             break
@@ -76,8 +118,10 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
     
     public var languageCode: String? {
         switch self {
-        case .wikipedia(let language):
+        case .wikipedia(let language), .wiktionary(let language), .wikisource(let language):
             return language.languageCode
+        case .wikiYeshiva:
+            return "he"
         default:
             break
         }
@@ -105,6 +149,12 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
         switch self {
         case .wikipedia(let language):
             components.host = "\(language.languageCode).wikipedia.org"
+        case .wiktionary(let language):
+            components.host = "\(language.languageCode).wiktionary.org"
+        case .wikisource(let language):
+            components.host = "\(language.languageCode).wikisource.org"
+        case .wikiYeshiva:
+            components.host = "www.yeshiva.org.il"
         case .commons:
             components.host = "commons.wikimedia.org"
         case .wikidata:
@@ -118,8 +168,10 @@ public enum WMFProject: Equatable, Hashable, Identifiable, Codable, Sendable {
     
     public var isRTL: Bool {
         switch self {
-        case .wikipedia(let language):
+        case .wikipedia(let language), .wiktionary(let language), .wikisource(let language):
             return language.isRTL
+        case .wikiYeshiva:
+            return true
         default:
             return false
         }
