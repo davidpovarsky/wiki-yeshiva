@@ -120,7 +120,7 @@ public final class WikiSourceManager: NSObject {
         siteURL(for: nil) ?? URL(string: "https://\(activeSource.defaultHost)")!
     }
 
-    @objc public var currentProject: WMFProject {
+    public var currentProject: WMFProject {
         activeSource.wmfProject()
     }
 
