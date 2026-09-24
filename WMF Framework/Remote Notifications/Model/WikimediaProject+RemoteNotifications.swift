@@ -81,6 +81,8 @@ extension WikimediaProject {
             return Self.mediawikiIdentifier
         case .wikispecies:
             return Self.wikispeciesIdentifier
+        case .wikiYeshiva:
+            return "yeshivawiki"
         }
     }
     
@@ -114,6 +116,8 @@ extension WikimediaProject {
             return WMFLocalizedString("project-name-mediawiki", value:"MediaWiki", comment: "Project name for MediaWiki.")
         case .wikispecies:
             return WMFLocalizedString("project-name-wikispecies", value:"Wikispecies", comment: "Project name for Wikispecies.")
+        case .wikiYeshiva:
+            return "ויקישיבה"
         }
     }
     
@@ -161,6 +165,8 @@ extension WikimediaProject {
             return projectName
         case .wikispecies:
             return projectName
+        case .wikiYeshiva:
+            return projectName
         }
     }
     
@@ -204,6 +210,8 @@ extension WikimediaProject {
             return configuration.mediaWikiAPIURLForHost(Configuration.Domain.mediaWiki, with: queryParameters).url
         case .wikispecies:
             return configuration.mediaWikiAPIURLForHost(Configuration.Domain.wikispecies, with: queryParameters).url
+        case .wikiYeshiva:
+            return configuration.mediaWikiAPIURLForHost(Configuration.Domain.wwwYeshiva, with: queryParameters).url
         }
     }
     
