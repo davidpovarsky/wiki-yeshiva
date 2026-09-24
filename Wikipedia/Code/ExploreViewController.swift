@@ -279,7 +279,6 @@ class ExploreViewController: ColumnarCollectionViewController, ExploreCardViewCo
         }
         let menu = UIMenu(title: "בחר מקור מידע", children: [sourceMenu, scrollToTopAction])
         logoBarButtonItem.menu = menu
-        logoBarButtonItem.showsMenuAsPrimaryAction = true
     }
 
     @objc private func wikiSourceDidChange(_ notification: Notification) {
