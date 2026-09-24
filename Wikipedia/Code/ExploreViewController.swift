@@ -262,23 +262,17 @@ class ExploreViewController: ColumnarCollectionViewController, ExploreCardViewCo
 
     private func updateLogoMenu() {
         guard let logoBarButtonItem = navigationItem.leftBarButtonItem else { return }
-        let currentSource = WikiSourceManager.shared.activeSource
-        let sourceActions = WMFWikiSourceIdentifier.allCases.map { source in
-            UIAction(title: source.displayName, state: source == currentSource ? .on : .off) { [weak self] _ in
+        logoBarButtonItem.menu = WikiSourceMenuBuilder.makeSourceMenu(
+            scrollToTopAction: { [weak self] in
+                self?.scrollToTop()
+            },
+            onSourceSelected: { [weak self] source in
                 guard let self else { return }
-                guard WikiSourceManager.shared.activeSource != source else { return }
-                WikiSourceManager.shared.activeSource = source
                 self.updateLogoMenu()
                 self.dataStore.feedContentController.updateContentSources()
                 self.updateFeedSources(with: nil, userInitiated: true)
             }
-        }
-        let sourceMenu = UIMenu(title: "", options: .displayInline, children: sourceActions)
-        let scrollToTopAction = UIAction(title: "גלול לראש העמוד", image: UIImage(systemName: "arrow.up")) { [weak self] _ in
-            self?.scrollToTop()
-        }
-        let menu = UIMenu(title: "בחר מקור מידע", children: [sourceMenu, scrollToTopAction])
-        logoBarButtonItem.menu = menu
+        )
     }
 
     @objc private func wikiSourceDidChange(_ notification: Notification) {

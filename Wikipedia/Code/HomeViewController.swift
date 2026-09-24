@@ -106,6 +106,7 @@ final class HomeViewController: UIViewController, WMFNavigationBarConfiguring, T
         NotificationCenter.default.addObserver(self, selector: #selector(articleDidChange(_:)), name: NSNotification.Name.WMFArticleUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(dayMayHaveChanged), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(dayMayHaveChanged), name: UIApplication.significantTimeChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(wikiSourceDidChange(_:)), name: WikiSourceManager.didChangeSourceNotification, object: nil)
 
         apply(theme: theme)
     }
@@ -395,6 +396,26 @@ final class HomeViewController: UIViewController, WMFNavigationBarConfiguring, T
         if #unavailable(iOS 26.0) {
             logoBarButtonItem.tintColor = theme.colors.logoTintColor
         }
+        updateLogoMenu()
+    }
+
+    private func updateLogoMenu() {
+        guard let logoBarButtonItem = navigationItem.leftBarButtonItem else { return }
+        logoBarButtonItem.menu = WikiSourceMenuBuilder.makeSourceMenu(
+            scrollToTopAction: { [weak self] in
+                self?.scrollSelectedFeedToTop()
+            },
+            onSourceSelected: { [weak self] source in
+                guard let self else { return }
+                self.updateLogoMenu()
+                self.dataStore.feedContentController.updateContentSources()
+                self._embeddedExploreViewController?.updateFeedSources(with: nil, userInitiated: true)
+            }
+        )
+    }
+
+    @objc private func wikiSourceDidChange(_ notification: Notification) {
+        updateLogoMenu()
     }
 
     @objc func userDidTapLogo() {
@@ -470,5 +491,31 @@ extension HomeViewController: YearInReviewBadgeDelegate {
 extension HomeViewController: WMFPreferredLanguagesViewControllerDelegate {
     func languagesController(_ controller: WMFPreferredLanguagesViewController, didUpdatePreferredLanguages languages: [MWKLanguageLink]) {
         reloadLanguages()
+    }
+}
+
+// MARK: - Multi-Wiki Source Menu Builder
+
+@MainActor
+enum WikiSourceMenuBuilder {
+    static func makeSourceMenu(
+        title: String = "בחר מקור מידע",
+        scrollToTopTitle: String = "גלול לראש העמוד",
+        scrollToTopAction: @escaping () -> Void,
+        onSourceSelected: @escaping (WMFWikiSourceIdentifier) -> Void
+    ) -> UIMenu {
+        let currentSource = WikiSourceManager.shared.activeSource
+        let sourceActions = WMFWikiSourceIdentifier.allCases.map { source in
+            UIAction(title: source.displayName, state: source == currentSource ? .on : .off) { _ in
+                guard WikiSourceManager.shared.activeSource != source else { return }
+                WikiSourceManager.shared.activeSource = source
+                onSourceSelected(source)
+            }
+        }
+        let sourceMenu = UIMenu(title: "", options: .displayInline, children: sourceActions)
+        let scrollToTopAction = UIAction(title: scrollToTopTitle, image: UIImage(systemName: "arrow.up")) { _ in
+            scrollToTopAction()
+        }
+        return UIMenu(title: title, children: [sourceMenu, scrollToTopAction])
     }
 }
