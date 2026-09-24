@@ -110,7 +110,8 @@ extension NotificationsCenterCellViewModel {
                 .wikivoyage,
                 .mediawiki,
                 .wikispecies,
-                .wikidata:
+                .wikidata,
+                .wikiYeshiva:
             return nil
         }
     }
