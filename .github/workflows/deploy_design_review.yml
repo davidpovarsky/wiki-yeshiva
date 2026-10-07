@@ -17,6 +17,14 @@ jobs:
     runs-on: macos-26
 
     steps:
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -25,6 +33,14 @@ jobs:
       # -------------------------------------------------------
       # 1. Compute build number
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Compute build number
         id: versioning
         run: |
@@ -43,6 +59,14 @@ jobs:
       # -------------------------------------------------------
       # 2. Update version and build number in Info.plist files
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Update version and build number
         env:
           VERSION: ${{ steps.versioning.outputs.version }}
@@ -72,15 +96,39 @@ jobs:
       # -------------------------------------------------------
       # 3. Build and upload to internal TestFlight (Experimental)
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Install fastlane
         run: bundle install
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Write App Store API Key
         run: |
           mkdir -p ~/.appstore
           echo "${{ secrets.APP_STORE_API_KEY }}" > ~/.appstore/AuthKey_${{ secrets.APP_STORE_KEY_ID }}.p8
           echo "APP_STORE_KEY_PATH=$HOME/.appstore/AuthKey_${{ secrets.APP_STORE_KEY_ID }}.p8" >> $GITHUB_ENV
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Build and upload to internal TestFlight
         env:
           APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
@@ -93,6 +141,14 @@ jobs:
       # -------------------------------------------------------
       # 4. Tag the build
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Tag build
         env:
           BUILD: ${{ steps.versioning.outputs.build }}
@@ -105,6 +161,14 @@ jobs:
       # -------------------------------------------------------
       # 5. Comment on the associated Phabricator task
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Comment on Phabricator task
         env:
           PHAB_TOKEN: ${{ secrets.PHAB_BOT_API_KEY }}
