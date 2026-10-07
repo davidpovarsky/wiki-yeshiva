@@ -1,5 +1,7 @@
 #import "WMFSearchFetcher_Testing.h"
+#import "MWKSearchResult.h"
 #import "WMFSearchResults_Internal.h"
+#import <WMF/NSString+WMFHTMLParsing.h>
 @import WMF;
 @import WMFData;
 
@@ -113,8 +115,7 @@ NSUInteger const WMFMaxSearchResultLimit = 24;
 
                          NSDictionary *query = [result objectForKey:@"query"];
                          if (!query) {
-                             WMFSearchResults *returnResults = previousResults == nil ? [[WMFSearchResults alloc] initWithLanguageVariantCode:url.wmf_languageVariantCode] : previousResults;
-                             success(returnResults);
+                             [self performSimpleSearchRequestForSearchTerm:searchTerm url:url queryParameters:queryParameters appendToPreviousResults:previousResults failure:failure success:success];
                              return;
                          }
 
@@ -126,6 +127,11 @@ NSUInteger const WMFMaxSearchResultLimit = 24;
                          }
                          searchResults.searchTerm = searchTerm;
 
+                         if (searchResults.results.count == 0) {
+                             [self performSimpleSearchRequestForSearchTerm:searchTerm url:url queryParameters:queryParameters appendToPreviousResults:previousResults failure:failure success:success];
+                             return;
+                         }
+
                          if (!previousResults) {
                              success(searchResults);
                              return;
@@ -133,6 +139,72 @@ NSUInteger const WMFMaxSearchResultLimit = 24;
 
                          [previousResults mergeValuesForKeysFromModel:searchResults];
 
+                         success(previousResults);
+                     }];
+}
+
+- (void)performSimpleSearchRequestForSearchTerm:(NSString *)searchTerm url:(NSURL *)url queryParameters:(NSDictionary *)queryParameters appendToPreviousResults:(nullable WMFSearchResults *)previousResults failure:(WMFErrorHandler)failure success:(WMFSearchResultsHandler)success {
+    NSNumber *resultLimit = queryParameters[@"gpslimit"] ?: queryParameters[@"gsrlimit"] ?: @(WMFMaxSearchResultLimit);
+    NSDictionary *params = @{
+        @"action": @"query",
+        @"list": @"search",
+        @"srsearch": searchTerm,
+        @"srnamespace": @0,
+        @"srprop": @"snippet",
+        @"srlimit": resultLimit,
+        @"format": @"json"
+    };
+
+    [self performMediaWikiAPIGETForURL:url
+                   withQueryParameters:params
+                     completionHandler:^(NSDictionary<NSString *, id> *_Nullable result, NSHTTPURLResponse *_Nullable response, NSError *_Nullable error) {
+                         if (error) {
+                             failure(error);
+                             return;
+                         }
+
+                         NSArray<NSDictionary *> *searchResults = result[@"query"][@"search"];
+                         if (![searchResults isKindOfClass:[NSArray class]]) {
+                             WMFSearchResults *returnResults = previousResults == nil ? [[WMFSearchResults alloc] initWithLanguageVariantCode:url.wmf_languageVariantCode] : previousResults;
+                             returnResults.searchTerm = searchTerm;
+                             success(returnResults);
+                             return;
+                         }
+
+                         NSMutableArray<MWKSearchResult *> *mappedResults = [NSMutableArray arrayWithCapacity:searchResults.count];
+                         [searchResults enumerateObjectsUsingBlock:^(NSDictionary *resultDictionary, NSUInteger idx, BOOL *stop) {
+                             NSString *title = [resultDictionary[@"title"] isKindOfClass:[NSString class]] ? resultDictionary[@"title"] : nil;
+                             if (title.length == 0) {
+                                 return;
+                             }
+
+                             NSString *snippet = [resultDictionary[@"snippet"] isKindOfClass:[NSString class]] ? [resultDictionary[@"snippet"] wmf_stringByRemovingHTML] : nil;
+                             NSInteger pageID = [resultDictionary[@"pageid"] respondsToSelector:@selector(integerValue)] ? [resultDictionary[@"pageid"] integerValue] : 0;
+                             NSNumber *namespace = [resultDictionary[@"ns"] isKindOfClass:[NSNumber class]] ? resultDictionary[@"ns"] : @0;
+                             MWKSearchResult *mappedResult = [[MWKSearchResult alloc] initWithArticleID:pageID
+                                                                                                  revID:0
+                                                                                                  title:title
+                                                                                           displayTitle:title
+                                                                                       displayTitleHTML:title
+                                                                                    wikidataDescription:nil
+                                                                                                extract:snippet
+                                                                                           thumbnailURL:nil
+                                                                                                  index:@(idx)
+                                                                                         titleNamespace:namespace
+                                                                                               location:nil];
+                             [mappedResults addObject:mappedResult];
+                         }];
+
+                         WMFSearchResults *fallbackResults = [[WMFSearchResults alloc] initWithSearchTerm:searchTerm
+                                                                                                  results:mappedResults
+                                                                                         searchSuggestion:nil
+                                                                                         redirectMappings:@[]];
+                         if (!previousResults) {
+                             success(fallbackResults);
+                             return;
+                         }
+
+                         [previousResults mergeValuesForKeysFromModel:fallbackResults];
                          success(previousResults);
                      }];
 }
