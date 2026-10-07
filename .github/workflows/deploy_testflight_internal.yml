@@ -16,6 +16,14 @@ jobs:
     runs-on: macos-26
 
     steps:
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -24,6 +32,14 @@ jobs:
       # -------------------------------------------------------
       # 1. Compute build number
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Compute build number
         id: versioning
         env:
@@ -44,6 +60,14 @@ jobs:
       # -------------------------------------------------------
       # 2. Check for duplicate build
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Check for duplicate build
         id: duplicate_check
         run: |
@@ -60,6 +84,15 @@ jobs:
       # -------------------------------------------------------
       # 3. Find new PRs since last release tag (for What to Test notes)
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Find new PRs since last release
         id: prs
         if: steps.duplicate_check.outputs.skip != 'true'
@@ -110,6 +143,15 @@ jobs:
       # -------------------------------------------------------
       # 4. Find new PRs since last beta tag (for Phabricator commenting)
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Find new PRs since last beta
         id: new_prs
         if: steps.duplicate_check.outputs.skip != 'true'
@@ -159,6 +201,15 @@ jobs:
       #    - All PRs since last release → What to Test notes + release task
       #    - New PRs since last beta → Phabricator commenting
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Fetch Phabricator tasks from PRs
         id: phab
         if: steps.duplicate_check.outputs.skip != 'true'
@@ -239,6 +290,15 @@ jobs:
       # -------------------------------------------------------
       # 6. Write TestFlight "What to Test" notes
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Write TestFlight notes
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
@@ -261,6 +321,15 @@ jobs:
       # -------------------------------------------------------
       # 7. Update version and build number in Info.plist files
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Update version and build number
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
@@ -291,10 +360,28 @@ jobs:
       # -------------------------------------------------------
       # 8. Build and upload to TestFlight (internal)
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Install fastlane
         if: steps.duplicate_check.outputs.skip != 'true'
         run: bundle install
 
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Write App Store API Key
         if: steps.duplicate_check.outputs.skip != 'true'
         run: |
@@ -302,6 +389,15 @@ jobs:
           echo "${{ secrets.APP_STORE_API_KEY }}" > ~/.appstore/AuthKey_${{ secrets.APP_STORE_KEY_ID }}.p8
           echo "APP_STORE_KEY_PATH=$HOME/.appstore/AuthKey_${{ secrets.APP_STORE_KEY_ID }}.p8" >> $GITHUB_ENV
 
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Build and upload to internal TestFlight
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
@@ -315,6 +411,15 @@ jobs:
       # -------------------------------------------------------
       # 9. Tag the build
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Tag build
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
@@ -328,6 +433,15 @@ jobs:
       # -------------------------------------------------------
       # 10. Post to Phabricator tasks
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Post to Phabricator tasks
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
@@ -361,6 +475,15 @@ jobs:
       # -------------------------------------------------------
       # 11. Update release task with included tasks
       # -------------------------------------------------------
+      - name: Live Activity · refresh
+        if: steps.duplicate_check.outputs.skip != 'true'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Update release task with included tasks
         if: steps.duplicate_check.outputs.skip != 'true'
         env:
