@@ -14,7 +14,6 @@ on:
       - "Tag Latest Beta"
       - "Update App Version"
     types:
-      - requested
       - in_progress
       - completed
 
