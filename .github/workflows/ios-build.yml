@@ -29,9 +29,25 @@ jobs:
     runs-on: macos-26
 
     steps:
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Select Xcode
         run: |
           echo "Available Xcode versions:"
@@ -46,16 +62,40 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks || true
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Generate open source build configuration
         run: |
           bash scripts/setup_bundle_id ci
           test -f Configurations/OpenSourceDebug.xcconfig
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Show available schemes and destinations
         run: |
           xcodebuild -list -project Wikipedia.xcodeproj
           xcodebuild -showdestinations -project Wikipedia.xcodeproj -scheme Wikipedia || true
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Build app for iOS device
         run: |
           set -o pipefail
@@ -70,6 +110,14 @@ jobs:
             CODE_SIGN_IDENTITY='' \
             build 2>&1 | tee xcodebuild.log
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Package unsigned IPA
         run: |
           set -e
@@ -86,6 +134,14 @@ jobs:
           ls -lh artifacts
           file artifacts/Wikipedia-unsigned.ipa
 
+      - name: Live Activity · refresh
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
@@ -94,6 +150,15 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Live Activity · refresh
+        if: github.event_name == 'workflow_dispatch'
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Publish direct IPA release asset
         if: github.event_name == 'workflow_dispatch'
         env:
@@ -106,6 +171,15 @@ jobs:
             --title "Unsigned IPA $TAG_NAME" \
             --notes "Unsigned IPA built from $GITHUB_SHA. Download the .ipa asset directly from this release."
 
+      - name: Live Activity · refresh
+        if: failure()
+        uses: davidpovarsky/github-automation/live-refresh@main
+        continue-on-error: true
+        with:
+          event: refresh
+          device_id: ${{ secrets.NOTIFY_DEVICE_ID }}
+          token: ${{ secrets.NOTIFY_DEVICE_TOKEN }}
+          github_token: ${{ github.token }}
       - name: Print build errors
         if: failure()
         run: |
